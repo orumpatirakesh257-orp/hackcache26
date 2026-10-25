@@ -4942,7 +4942,7 @@
       "queuePosition": 3,
       "journeyStep": "doctor",
       "createdAt": "2026-10-23T17:17:43.315Z",
-      "updatedAt": "2026-10-25T07:20:50.605Z"
+      "updatedAt": "2026-10-25T14:01:52.561Z"
     },
     {
       "id": "token-1792775863336-1y28",
@@ -5070,7 +5070,7 @@
       "queuePosition": 4,
       "journeyStep": "doctor",
       "createdAt": "2026-10-23T17:17:43.453Z",
-      "updatedAt": "2026-10-25T07:20:50.605Z"
+      "updatedAt": "2026-10-25T14:01:52.561Z"
     },
     {
       "id": "token-1792775863467-0l8z",
@@ -5137,7 +5137,7 @@
       "queuePosition": 1,
       "journeyStep": "doctor",
       "createdAt": "2026-10-23T17:17:43.508Z",
-      "updatedAt": "2026-10-25T07:20:50.605Z"
+      "updatedAt": "2026-10-25T14:01:52.561Z"
     },
     {
       "id": "token-1792775863521-1kj5",
@@ -5411,7 +5411,7 @@
       "queuePosition": 5,
       "journeyStep": "doctor",
       "createdAt": "2026-10-23T17:17:43.778Z",
-      "updatedAt": "2026-10-25T07:20:50.605Z"
+      "updatedAt": "2026-10-25T14:01:52.561Z"
     },
     {
       "id": "token-1792775863793-voyi",
@@ -5502,12 +5502,12 @@
       "opdNumber": "OPD-2026-1100",
       "status": "waiting",
       "priority": "normal",
-      "estimatedWaitMinutes": 24,
+      "estimatedWaitMinutes": 42,
       "waitReason": "Doctor delayed by 15 mins (Attending emergency fracture reduction)",
-      "queuePosition": 2,
+      "queuePosition": 4,
       "journeyStep": "doctor",
       "createdAt": "2026-10-23T17:17:43.889Z",
-      "updatedAt": "2026-10-25T12:05:10.644Z"
+      "updatedAt": "2026-10-25T14:01:52.582Z"
     },
     {
       "id": "token-1792775863907-1l2b",
@@ -5523,7 +5523,7 @@
       "queuePosition": 6,
       "journeyStep": "doctor",
       "createdAt": "2026-10-23T17:17:43.907Z",
-      "updatedAt": "2026-10-25T07:20:50.605Z"
+      "updatedAt": "2026-10-25T14:01:52.561Z"
     },
     {
       "id": "token-1792775863925-1ov4",
@@ -5539,7 +5539,7 @@
       "queuePosition": 7,
       "journeyStep": "doctor",
       "createdAt": "2026-10-23T17:17:43.925Z",
-      "updatedAt": "2026-10-25T07:20:50.605Z"
+      "updatedAt": "2026-10-25T14:01:52.561Z"
     },
     {
       "id": "token-1792775863951-47jp",
@@ -5667,7 +5667,7 @@
       "queuePosition": 2,
       "journeyStep": "doctor",
       "createdAt": "2026-10-23T17:17:44.105Z",
-      "updatedAt": "2026-10-25T07:20:50.605Z"
+      "updatedAt": "2026-10-25T14:01:52.561Z"
     },
     {
       "id": "token-1792775864126-sy6x",
@@ -6062,12 +6062,12 @@
       "opdNumber": "OPD-2026-1135",
       "status": "waiting",
       "priority": "normal",
-      "estimatedWaitMinutes": 33,
+      "estimatedWaitMinutes": 51,
       "waitReason": "Doctor delayed by 15 mins (Attending emergency fracture reduction)",
-      "queuePosition": 3,
+      "queuePosition": 5,
       "journeyStep": "doctor",
       "createdAt": "2026-10-23T17:17:44.711Z",
-      "updatedAt": "2026-10-25T12:05:10.644Z"
+      "updatedAt": "2026-10-25T14:01:52.582Z"
     },
     {
       "id": "token-1792775864736-mhe0",
@@ -6126,12 +6126,12 @@
       "opdNumber": "OPD-2026-1139",
       "status": "waiting",
       "priority": "normal",
-      "estimatedWaitMinutes": 42,
+      "estimatedWaitMinutes": 60,
       "waitReason": "Doctor delayed by 15 mins (Attending emergency fracture reduction)",
-      "queuePosition": 4,
+      "queuePosition": 6,
       "journeyStep": "doctor",
       "createdAt": "2026-10-23T17:17:44.822Z",
-      "updatedAt": "2026-10-25T12:05:10.644Z"
+      "updatedAt": "2026-10-25T14:01:52.582Z"
     },
     {
       "id": "token-1792775864850-qc4c",
@@ -6323,7 +6323,7 @@
       "queuePosition": 8,
       "journeyStep": "doctor",
       "createdAt": "2026-10-23T17:32:09.426Z",
-      "updatedAt": "2026-10-25T07:20:50.605Z"
+      "updatedAt": "2026-10-25T14:01:52.561Z"
     },
     {
       "id": "token-1792825448641-395s",
@@ -6339,7 +6339,7 @@
       "queuePosition": 9,
       "journeyStep": "doctor",
       "createdAt": "2026-10-24T07:04:08.641Z",
-      "updatedAt": "2026-10-25T07:20:50.605Z"
+      "updatedAt": "2026-10-25T14:01:52.561Z"
     },
     {
       "id": "token-1792825448707-rrt5",
@@ -6369,12 +6369,12 @@
       "opdNumber": "OPD-2026-1152",
       "status": "waiting",
       "priority": "normal",
-      "estimatedWaitMinutes": 51,
+      "estimatedWaitMinutes": 54,
       "waitReason": "Doctor delayed by 15 mins (Attending emergency fracture reduction)",
-      "queuePosition": 5,
+      "queuePosition": 7,
       "journeyStep": "doctor",
       "createdAt": "2026-10-24T07:39:13.895Z",
-      "updatedAt": "2026-10-25T12:05:10.644Z"
+      "updatedAt": "2026-10-25T14:01:52.582Z"
     },
     {
       "id": "token-1792827868657-okck",
@@ -6390,7 +6390,7 @@
       "queuePosition": 10,
       "journeyStep": "doctor",
       "createdAt": "2026-10-24T07:44:28.657Z",
-      "updatedAt": "2026-10-25T07:20:50.605Z"
+      "updatedAt": "2026-10-25T14:01:52.561Z"
     },
     {
       "id": "token-1792912843860-9vvb",
@@ -6401,12 +6401,12 @@
       "opdNumber": "OPD-2026-1154",
       "status": "waiting",
       "priority": "urgent",
-      "estimatedWaitMinutes": 60,
+      "estimatedWaitMinutes": 63,
       "waitReason": "Doctor delayed by 15 mins (Attending emergency fracture reduction)",
-      "queuePosition": 6,
+      "queuePosition": 8,
       "journeyStep": "doctor",
       "createdAt": "2026-10-25T07:20:43.860Z",
-      "updatedAt": "2026-10-25T12:05:10.644Z"
+      "updatedAt": "2026-10-25T14:01:52.582Z"
     },
     {
       "id": "token-1792912850572-bclp",
@@ -6422,7 +6422,7 @@
       "queuePosition": 11,
       "journeyStep": "doctor",
       "createdAt": "2026-10-25T07:20:50.572Z",
-      "updatedAt": "2026-10-25T07:20:50.605Z"
+      "updatedAt": "2026-10-25T14:01:52.561Z"
     },
     {
       "id": "token-1792912850613-5hvy",
@@ -6449,12 +6449,12 @@
       "opdNumber": "OPD-2026-1155",
       "status": "waiting",
       "priority": "normal",
-      "estimatedWaitMinutes": 54,
+      "estimatedWaitMinutes": 72,
       "waitReason": "Doctor delayed by 15 mins (Attending emergency fracture reduction)",
-      "queuePosition": 7,
+      "queuePosition": 9,
       "journeyStep": "doctor",
       "createdAt": "2026-10-25T11:16:25.498Z",
-      "updatedAt": "2026-10-25T12:05:10.644Z"
+      "updatedAt": "2026-10-25T14:01:52.582Z"
     },
     {
       "id": "token-1792929910621-5ua8",
@@ -6465,12 +6465,76 @@
       "opdNumber": "OPD-2026-1156",
       "status": "waiting",
       "priority": "normal",
-      "estimatedWaitMinutes": 63,
+      "estimatedWaitMinutes": 81,
       "waitReason": "Doctor delayed by 15 mins (Attending emergency fracture reduction)",
-      "queuePosition": 8,
+      "queuePosition": 10,
       "journeyStep": "doctor",
       "createdAt": "2026-10-25T12:05:10.621Z",
-      "updatedAt": "2026-10-25T12:05:10.644Z"
+      "updatedAt": "2026-10-25T14:01:52.582Z"
+    },
+    {
+      "id": "token-1792935979215-xnmu",
+      "tokenNumber": "GM-017",
+      "departmentId": "dept-gen-med",
+      "doctorId": "doc-gm-1",
+      "patientId": "test-pat-1",
+      "opdNumber": "OPD-TEST-001",
+      "status": "waiting",
+      "priority": "normal",
+      "estimatedWaitMinutes": 33,
+      "waitReason": "Queue running normally with 2 active consultation room(s).",
+      "queuePosition": 12,
+      "journeyStep": "doctor",
+      "createdAt": "2026-10-25T13:46:19.215Z",
+      "updatedAt": "2026-10-25T14:01:52.561Z"
+    },
+    {
+      "id": "token-1792935979289-krmv",
+      "tokenNumber": "ORTHO-013",
+      "departmentId": "dept-ortho",
+      "doctorId": "doc-ortho-1",
+      "patientId": "test-emerg-pat",
+      "opdNumber": "OPD-EMERG-001",
+      "status": "emergency_escalated",
+      "priority": "emergency_critical",
+      "estimatedWaitMinutes": 0,
+      "waitReason": "Immediate Emergency Priority - Triage assessment in progress",
+      "queuePosition": 2,
+      "journeyStep": "doctor",
+      "createdAt": "2026-10-25T13:46:19.289Z",
+      "updatedAt": "2026-10-25T13:46:19.289Z"
+    },
+    {
+      "id": "token-1792936912508-ykym",
+      "tokenNumber": "GM-018",
+      "departmentId": "dept-gen-med",
+      "doctorId": "doc-gm-1",
+      "patientId": "test-pat-1",
+      "opdNumber": "OPD-TEST-001",
+      "status": "waiting",
+      "priority": "normal",
+      "estimatedWaitMinutes": 36,
+      "waitReason": "Queue running normally with 2 active consultation room(s).",
+      "queuePosition": 13,
+      "journeyStep": "doctor",
+      "createdAt": "2026-10-25T14:01:52.508Z",
+      "updatedAt": "2026-10-25T14:01:52.561Z"
+    },
+    {
+      "id": "token-1792936912571-0ftt",
+      "tokenNumber": "ORTHO-014",
+      "departmentId": "dept-ortho",
+      "doctorId": "doc-ortho-1",
+      "patientId": "test-emerg-pat",
+      "opdNumber": "OPD-EMERG-001",
+      "status": "emergency_escalated",
+      "priority": "emergency_critical",
+      "estimatedWaitMinutes": 0,
+      "waitReason": "Immediate Emergency Priority - Triage assessment in progress",
+      "queuePosition": 3,
+      "journeyStep": "doctor",
+      "createdAt": "2026-10-25T14:01:52.571Z",
+      "updatedAt": "2026-10-25T14:01:52.572Z"
     }
   ],
   "slips": [
@@ -9677,9 +9741,131 @@
       "hospitalName": "Government General Hospital (GGH)",
       "appointmentDate": "2026-10-26",
       "appointmentSlot": "10:00 AM - 11:00 AM"
+    },
+    {
+      "id": "slip-1792935979237",
+      "patientId": "test-pat-1",
+      "tokenNumber": "GM-017",
+      "opdNumber": "OPD-TEST-001",
+      "patientName": "Unit Test Patient",
+      "age": 45,
+      "gender": "male",
+      "departmentId": "dept-gen-med",
+      "departmentName": "General Medicine",
+      "doctorName": "Dr. Rajesh Varma",
+      "roomNumber": "Room 2",
+      "floor": 0,
+      "block": "A",
+      "dateStr": "25 Oct 2026",
+      "timeStr": "07:16 pm",
+      "estimatedWaitMinutes": 15,
+      "navigationHint": "Ground Floor, turn left after the Water Purifier to Room 2",
+      "signedQrPayload": "{\"slipId\":\"slip-1792935979237\",\"opdNumber\":\"OPD-TEST-001\",\"tokenNumber\":\"GM-017\",\"patientName\":\"Unit Test Patient\",\"department\":\"General Medicine\",\"room\":\"Room 2\",\"date\":\"25 Oct 2026\",\"hash\":\"DRJSEJL6\"}",
+      "hospitalId": "hosp-aiims-delhi",
+      "hospitalName": "AIIMS New Delhi (Main Campus)",
+      "appointmentDate": "25 Oct 2026",
+      "appointmentSlot": "07:16 pm"
+    },
+    {
+      "id": "slip-1792935979289",
+      "patientId": "test-emerg-pat",
+      "tokenNumber": "ORTHO-013",
+      "opdNumber": "OPD-EMERG-001",
+      "patientName": "Emergency Test Patient",
+      "age": 52,
+      "gender": "female",
+      "departmentId": "dept-ortho",
+      "departmentName": "Orthopaedics",
+      "doctorName": "Dr. Priya Sharma",
+      "roomNumber": "Room 12",
+      "floor": 1,
+      "block": "A",
+      "dateStr": "25 Oct 2026",
+      "timeStr": "07:16 pm",
+      "estimatedWaitMinutes": 15,
+      "navigationHint": "Floor 1, take the elevator or stairs next to the Ficus plant to Room 12",
+      "signedQrPayload": "{\"slipId\":\"slip-1792935979289\",\"opdNumber\":\"OPD-EMERG-001\",\"tokenNumber\":\"ORTHO-013\",\"patientName\":\"Emergency Test Patient\",\"department\":\"Orthopaedics\",\"room\":\"Room 12\",\"date\":\"25 Oct 2026\",\"hash\":\"DW9JO77Z\"}",
+      "hospitalId": "hosp-aiims-delhi",
+      "hospitalName": "AIIMS New Delhi (Main Campus)",
+      "appointmentDate": "25 Oct 2026",
+      "appointmentSlot": "07:16 pm"
+    },
+    {
+      "id": "slip-1792936912527",
+      "patientId": "test-pat-1",
+      "tokenNumber": "GM-018",
+      "opdNumber": "OPD-TEST-001",
+      "patientName": "Unit Test Patient",
+      "age": 45,
+      "gender": "male",
+      "departmentId": "dept-gen-med",
+      "departmentName": "General Medicine",
+      "doctorName": "Dr. Rajesh Varma",
+      "roomNumber": "Room 2",
+      "floor": 0,
+      "block": "A",
+      "dateStr": "25 Oct 2026",
+      "timeStr": "07:31 pm",
+      "estimatedWaitMinutes": 15,
+      "navigationHint": "Ground Floor, turn left after the Water Purifier to Room 2",
+      "signedQrPayload": "{\"slipId\":\"slip-1792936912527\",\"opdNumber\":\"OPD-TEST-001\",\"tokenNumber\":\"GM-018\",\"patientName\":\"Unit Test Patient\",\"department\":\"General Medicine\",\"room\":\"Room 2\",\"date\":\"25 Oct 2026\",\"hash\":\"TN19XA1H\"}",
+      "hospitalId": "hosp-aiims-delhi",
+      "hospitalName": "AIIMS New Delhi (Main Campus)",
+      "appointmentDate": "25 Oct 2026",
+      "appointmentSlot": "07:31 pm"
+    },
+    {
+      "id": "slip-1792936912571",
+      "patientId": "test-emerg-pat",
+      "tokenNumber": "ORTHO-014",
+      "opdNumber": "OPD-EMERG-001",
+      "patientName": "Emergency Test Patient",
+      "age": 52,
+      "gender": "female",
+      "departmentId": "dept-ortho",
+      "departmentName": "Orthopaedics",
+      "doctorName": "Dr. Priya Sharma",
+      "roomNumber": "Room 12",
+      "floor": 1,
+      "block": "A",
+      "dateStr": "25 Oct 2026",
+      "timeStr": "07:31 pm",
+      "estimatedWaitMinutes": 15,
+      "navigationHint": "Floor 1, take the elevator or stairs next to the Ficus plant to Room 12",
+      "signedQrPayload": "{\"slipId\":\"slip-1792936912571\",\"opdNumber\":\"OPD-EMERG-001\",\"tokenNumber\":\"ORTHO-014\",\"patientName\":\"Emergency Test Patient\",\"department\":\"Orthopaedics\",\"room\":\"Room 12\",\"date\":\"25 Oct 2026\",\"hash\":\"RNON17FK\"}",
+      "hospitalId": "hosp-aiims-delhi",
+      "hospitalName": "AIIMS New Delhi (Main Campus)",
+      "appointmentDate": "25 Oct 2026",
+      "appointmentSlot": "07:31 pm"
     }
   ],
   "emergencyAlerts": [
+    {
+      "id": "emerg-1792936912582",
+      "patientId": "test-emerg-pat",
+      "patientName": "Queued Patient",
+      "location": "Waiting outside dept-ortho",
+      "flaggedSymptoms": [
+        "Sudden collapse and breathing distress in waiting area"
+      ],
+      "priority": "critical",
+      "status": "flagged",
+      "timestamp": "2026-10-25T14:01:52.582Z",
+      "nurseNotes": "Escalated from normal queue by Triage Nurse Anjali. Original Token: ORTHO-014"
+    },
+    {
+      "id": "emerg-1792935979296",
+      "patientId": "test-emerg-pat",
+      "patientName": "Queued Patient",
+      "location": "Waiting outside dept-ortho",
+      "flaggedSymptoms": [
+        "Sudden collapse and breathing distress in waiting area"
+      ],
+      "priority": "critical",
+      "status": "flagged",
+      "timestamp": "2026-10-25T13:46:19.296Z",
+      "nurseNotes": "Escalated from normal queue by Triage Nurse Anjali. Original Token: ORTHO-013"
+    },
     {
       "id": "emerg-1792912850620",
       "patientId": "test-emerg-pat",
@@ -9755,6 +9941,128 @@
     }
   ],
   "auditLogs": [
+    {
+      "id": "audit-1792936912582-x6qkd",
+      "timestamp": "2026-10-25T14:01:52.582Z",
+      "action": "EMERGENCY_ESCALATION",
+      "performedBy": "Triage Nurse Anjali",
+      "role": "triage_nurse",
+      "details": "Escalated Token ORTHO-014 to EMERGENCY: Sudden collapse and breathing distress in waiting area",
+      "patientId": "test-emerg-pat"
+    },
+    {
+      "id": "audit-1792936912581-rsrj8",
+      "timestamp": "2026-10-25T14:01:52.581Z",
+      "action": "PATIENT_ENQUEUED",
+      "performedBy": "Emergency Test Patient",
+      "role": "patient",
+      "details": "Assigned token ORTHO-014 for Orthopaedics (Room 12)",
+      "patientId": "test-emerg-pat"
+    },
+    {
+      "id": "audit-1792936912561-u6363",
+      "timestamp": "2026-10-25T14:01:52.561Z",
+      "action": "PATIENT_RESUMED",
+      "performedBy": "Patient",
+      "role": "patient",
+      "details": "Token GM-018 resumed back in queue",
+      "patientId": "test-pat-1"
+    },
+    {
+      "id": "audit-1792936912555-n7fof",
+      "timestamp": "2026-10-25T14:01:52.555Z",
+      "action": "PATIENT_STEPPED_AWAY",
+      "performedBy": "Patient",
+      "role": "patient",
+      "details": "Token GM-018 stepped away with 10 min grace period until 7:41:52 PM",
+      "patientId": "test-pat-1"
+    },
+    {
+      "id": "audit-1792936912546-u63uh",
+      "timestamp": "2026-10-25T14:01:52.546Z",
+      "action": "DOCTOR_STATUS_UPDATE",
+      "performedBy": "Dr. Rajesh Varma",
+      "role": "doctor",
+      "details": "Status: available, Delay: 0 mins ()"
+    },
+    {
+      "id": "audit-1792936912538-8tt0f",
+      "timestamp": "2026-10-25T14:01:52.538Z",
+      "action": "DOCTOR_STATUS_UPDATE",
+      "performedBy": "Dr. Rajesh Varma",
+      "role": "doctor",
+      "details": "Status: delayed, Delay: 20 mins (Test delay)"
+    },
+    {
+      "id": "audit-1792936912537-l6lu2",
+      "timestamp": "2026-10-25T14:01:52.538Z",
+      "action": "PATIENT_ENQUEUED",
+      "performedBy": "Unit Test Patient",
+      "role": "patient",
+      "details": "Assigned token GM-018 for General Medicine (Room 2)",
+      "patientId": "test-pat-1"
+    },
+    {
+      "id": "audit-1792935979297-7qvqg",
+      "timestamp": "2026-10-25T13:46:19.297Z",
+      "action": "EMERGENCY_ESCALATION",
+      "performedBy": "Triage Nurse Anjali",
+      "role": "triage_nurse",
+      "details": "Escalated Token ORTHO-013 to EMERGENCY: Sudden collapse and breathing distress in waiting area",
+      "patientId": "test-emerg-pat"
+    },
+    {
+      "id": "audit-1792935979296-bkiv6",
+      "timestamp": "2026-10-25T13:46:19.296Z",
+      "action": "PATIENT_ENQUEUED",
+      "performedBy": "Emergency Test Patient",
+      "role": "patient",
+      "details": "Assigned token ORTHO-013 for Orthopaedics (Room 12)",
+      "patientId": "test-emerg-pat"
+    },
+    {
+      "id": "audit-1792935979278-x3iw3",
+      "timestamp": "2026-10-25T13:46:19.278Z",
+      "action": "PATIENT_RESUMED",
+      "performedBy": "Patient",
+      "role": "patient",
+      "details": "Token GM-017 resumed back in queue",
+      "patientId": "test-pat-1"
+    },
+    {
+      "id": "audit-1792935979269-8zf3w",
+      "timestamp": "2026-10-25T13:46:19.269Z",
+      "action": "PATIENT_STEPPED_AWAY",
+      "performedBy": "Patient",
+      "role": "patient",
+      "details": "Token GM-017 stepped away with 10 min grace period until 7:26:19 PM",
+      "patientId": "test-pat-1"
+    },
+    {
+      "id": "audit-1792935979260-rnd26",
+      "timestamp": "2026-10-25T13:46:19.261Z",
+      "action": "DOCTOR_STATUS_UPDATE",
+      "performedBy": "Dr. Rajesh Varma",
+      "role": "doctor",
+      "details": "Status: available, Delay: 0 mins ()"
+    },
+    {
+      "id": "audit-1792935979252-8qkkr",
+      "timestamp": "2026-10-25T13:46:19.252Z",
+      "action": "DOCTOR_STATUS_UPDATE",
+      "performedBy": "Dr. Rajesh Varma",
+      "role": "doctor",
+      "details": "Status: delayed, Delay: 20 mins (Test delay)"
+    },
+    {
+      "id": "audit-1792935979252-w86wr",
+      "timestamp": "2026-10-25T13:46:19.252Z",
+      "action": "PATIENT_ENQUEUED",
+      "performedBy": "Unit Test Patient",
+      "role": "patient",
+      "details": "Assigned token GM-017 for General Medicine (Room 2)",
+      "patientId": "test-pat-1"
+    },
     {
       "id": "audit-1792929910652-znast",
       "timestamp": "2026-10-25T12:05:10.652Z",
