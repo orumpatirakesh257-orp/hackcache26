@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import confetti from 'canvas-confetti';
 import {
@@ -537,11 +537,128 @@ export const Register: React.FC = () => {
       ...updated,
     };
 
-    // 9. Verbal Confirmation check
+    // 9. Multilingual question prompts
+    const currentL = (i18n.language as LanguageCode) || 'en';
+    const clientPrompts: Record<string, Record<LanguageCode, string>> = {
+      hospital: {
+        en: 'Welcome to Sahai Setu! Which hospital would you like to visit? (AIIMS New Delhi, GGH Hyderabad, Civil Hospital, Safdarjung, or SMS Hospital)',
+        hi: 'नमस्ते! सहाय सेतु में आपका स्वागत है। आप किस अस्पताल में दिखाना चाहते हैं? (जैसे एम्स नई दिल्ली, जीजीएच, या सिविल अस्पताल)',
+        te: 'నమస్కారం! సహాయ సేతుకు స్వాగతం. మీరు ఏ ఆసుపత్రిని ఎంచుకోవాలనుకుంటున్నారు? (ఉదా. AIIMS, GGH హైదరాబాద్, లేదా జిల్లా సివిల్ ఆసుపత్రి)',
+        ta: 'வணக்கம்! சஹாய் சேதுவிற்கு வரவேற்கிறோம். எந்த மருத்துவமனைக்கு செல்ல விரும்புகிறீர்கள்? (எய்ம்ஸ், ஜிஜிஹெச், அல்லது மாவட்ட மருத்துவமனை)',
+        kn: 'ನಮಸ್ಕಾರ! ಸಹಾಯ್ ಸೇತುಗೆ ಸುಸ್ವಾಗತ. ಯಾವ ಆಸ್ಪತ್ರೆಗೆ ಭೇಟಿ ನೀಡಲು ಬಯಸುತ್ತೀರಿ?',
+        ml: 'നമസ്കാരം! സഹായ് സേതുവിലേക്ക് സ്വാഗതം. ഏത് ആശുപത്രിയിലാണ് കാണിക്കേണ്ടത്?',
+        bn: 'নমস্কার! সহায় সেতুতে স্বাগতম। আপনি কোন হাসপাতালে যেতে চান?',
+        mr: 'नमस्कार! सहाय सेतू मध्ये आपले स्वागत आहे. आपण कोणत्या रुग्णालयात जाऊ इच्छिता?',
+        gu: 'નમસ્તે! સહાય સેતુમાં તમારું સ્વાગત છે. તમે કઈ હોસ્પિટલમાં બતાવવા માંગો છો?',
+        pa: 'ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਸਹਾਏ ਸੇਤੂ ਵਿੱਚ ਤੁਹਾਡਾ ਸੁਆਗਤ ਹੈ। ਤੁਸੀਂ ਕਿਸ ਹਸਪਤਾਲ ਜਾਣਾ ਚਾਹੁੰਦੇ ਹੋ?',
+      },
+      name: {
+        en: `Understood, at ${full.hospitalName}. Could you please state the patient's full name?`,
+        hi: `मरीज का पूरा नाम क्या है?`,
+        te: `రోగి పూర్తి పేరు ఏమిటి?`,
+        ta: `நோயாளியின் முழுப் பெயர் என்ன?`,
+        kn: `ರೋಗಿಯ ಪೂರ್ಣ ಹೆಸರು ಏನು?`,
+        ml: `രോഗിയുടെ മുഴുവൻ പേര് എന്താണ്?`,
+        bn: `রোগীর পুরো নাম কী?`,
+        mr: `रुग्णाचे पूर्ण नाव काय आहे?`,
+        gu: `દર્દીનું પૂરું નામ શું છે?`,
+        pa: `ਮਰੀਜ਼ ਦਾ ਪੂਰਾ ਨਾਮ ਕੀ ਹੈ?`,
+      },
+      age: {
+        en: `Thank you ${full.name}. What is the patient's age and gender?`,
+        hi: `${full.name} जी की उम्र और लिंग क्या है?`,
+        te: `${full.name} గారి వయస్సు మరియు లింగం ఏమిటి?`,
+        ta: `${full.name} அவர்களின் வயது மற்றும் பாலினம் என்ன?`,
+        kn: `${full.name} ಅವರ ವಯಸ್ಸು ಎಷ್ಟು?`,
+        ml: `${full.name} എന്നയാളുടെ പ്രായം എത്രയാണ്?`,
+        bn: `${full.name}-এর বয়স কত?`,
+        mr: `${full.name} यांचे वय किती आहे?`,
+        gu: `${full.name}ની ઉંમર કેટલી છે?`,
+        pa: `${full.name} ਦੀ ਉਮਰ ਕਿੰਨੀ ਹੈ?`,
+      },
+      symptoms: {
+        en: `What health issues or symptoms is ${full.name} experiencing today? (e.g. knee pain, fever, cough)`,
+        hi: `${full.name} जी, आपको क्या स्वास्थ्य समस्या या लक्षण हैं? (जैसे घुटने का दर्द, बुखार, खांसी)`,
+        te: `${full.name} గారూ, మీకు ఎటువంటి ఆరోగ్య సమస్య లేదా లక్షణాలు ఉన్నాయి? (ఉదా. మోకాలి నొప్పి, జ్వరం, దగ్గు)`,
+        ta: `${full.name} அவர்களுக்கு என்ன உடல்நல பிரச்சனை உள்ளது? (எ.கா. மூட்டு வலி, காய்ச்சல், இருமல்)`,
+        kn: `${full.name} ಅವರಿಗೆ ಯಾವ ಆರೋಗ್ಯ ಸಮಸ್ಯೆ ಅಥವಾ ಲಕ್ಷಣಗಳಿವೆ?`,
+        ml: `${full.name} എന്നയാൾക്ക് എന്തൊക്കെ ബുദ്ധിമുട്ടുകൾ ഉണ്ട്?`,
+        bn: `${full.name}-এর কী শারীরিক সমস্যা দেখা দিচ্ছে?`,
+        mr: `${full.name} यांना काय त्रास होत आहे?`,
+        gu: `${full.name}ને કઈ તકલીફ છે?`,
+        pa: `${full.name} ਨੂੰ ਕੀ ਸਿਹਤ ਸਮੱਸਿਆ ਹੈ?`,
+      },
+      slot: {
+        en: `For ${full.departmentName || 'OPD'}, which slot do you prefer? Available slots: 10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM, or 02:00 PM - 03:00 PM.`,
+        hi: `आप किस समय का ओपीडी स्लॉट चाहते हैं? उपलब्ध: 10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM, या दोपहर 02:00 PM - 03:00 PM।`,
+        te: `మీరు ఏ సమయం స్లాట్ కావాలనుకుంటున్నారు? అందుబాటులో ఉన్న స్లాట్లు: 10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM, లేదా 02:00 PM - 03:00 PM.`,
+        ta: `எந்த நேர ஸ்லாட்டை விரும்புகிறீர்கள்? (10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM, அல்லது 02:00 PM - 03:00 PM)`,
+        kn: `ಯಾವ ಸಮಯದ ಸ್ಲಾಟ್ ಬಯಸುತ್ತೀರಿ? (10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM)`,
+        ml: `ഏത് സമയ സ്ലോട്ടാണ് താല്പര്യം? (10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM)`,
+        bn: `কোন সময়ের স্লট নিতে চান? (10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM)`,
+        mr: `कोणत्या वेळेचा स्लॉट हवा आहे? (10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM)`,
+        gu: `કયા સમયનો સ્લોટ પસંદ કરશો? (10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM)`,
+        pa: `ਕਿਸ ਸਮੇਂ ਦਾ ਸਲਾਟ ਲੈਣਾ ਚਾਹੁੰਦੇ ਹੋ? (10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM)`,
+      },
+      phone: {
+        en: 'Almost complete! What is your 10-digit mobile number for appointment SMS and live queue notifications?',
+        hi: 'कृपया अपना 10 अंकों का मोबाइल नंबर बताएं ताकि डिजिटल पर्ची और टोकन का एसएमएस भेजा जा सके।',
+        te: 'దయచేసి మీ 10 అంకెల మొబైల్ నంబర్ చెప్పండి, తద్వారా డిజిటల్ స్లిప్ మరియు టోకెన్ SMS పంపబడుతుంది.',
+        ta: 'டிஜிட்டல் ரசீது மற்றும் நேரடி டோக்கன் எஸ்எம்எஸ் பெற உங்கள் 10 இலக்க மொபைல் எண்ணைக் கூறவும்.',
+        kn: 'ಡಿಜಿಟಲ್ ಸ್ಲಿಪ್ ಪಡೆಯಲು ದಯವಿಟ್ಟು ನಿಮ್ಮ 10 ಅಂಕಿಗಳ ಮೊಬೈಲ್ ಸಂಖ್ಯೆ ತಿಳಿಸಿ.',
+        ml: 'ഡിജിറ്റൽ സ്ലിപ്പിനായി ദയവായി നിങ്ങളുടെ 10 അക്ക മൊബൈൽ നമ്പർ പറയൂ.',
+        bn: 'ডিজিটাল স্লিপ পেতে অনুগ্রহ করে আপনার ১০ সংখ্যার মোবাইল নম্বরটি বলুন।',
+        mr: 'डिजिटल पावतीसाठी कृपया आपला १० अंकी मोबाईल नंबर सांगा.',
+        gu: 'ડિજિટલ સ્લિપ માટે કૃપા કરીને તમારો ૧૦ અંકનો મોબાઈલ નંબર જણાવો.',
+        pa: 'ਡਿਜੀਟਲ ਪਰਚੀ ਲਈ ਕਿਰਪਾ ਕਰਕੇ ਆਪਣਾ 10 ਅੰਕਾਂ ਦਾ ਮੋਬਾਈਲ ਨੰਬਰ ਦੱਸੋ।',
+      },
+      confirmation: {
+        en: `I have your details: ${full.name}, age ${full.age}, for ${full.departmentName} at ${full.hospitalName} on ${full.appointmentDate} (${full.appointmentSlot}). Mobile: ${full.phone}. Would you like me to book this appointment? Say "Yes" or "Confirm".`,
+        hi: `विवरण: मरीज ${full.name}, उम्र ${full.age}, अस्पताल: ${full.hospitalName}, विभाग: ${full.departmentName}, समय: ${full.appointmentSlot}, फोन: ${full.phone}। क्या मैं यह पंजीकरण बुक कर दूं? 'हाँ' या 'Confirm' कहें।`,
+        te: `వివరాలు: రోగి ${full.name}, వయస్సు ${full.age}, ఆసుపత్రి: ${full.hospitalName}, విభాగం: ${full.departmentName}, సమయం: ${full.appointmentSlot}, ఫోన్: ${full.phone}. నేను ఈ రిజిస్ట్రేషన్ ఖరారు చేయమంటారా? 'సరే' లేదా 'Confirm' అని చెప్పండి.`,
+        ta: `விவரங்கள்: நோயாளி ${full.name}, வயது ${full.age}, மருத்துவமனை: ${full.hospitalName}, துறை: ${full.departmentName}, நேரம்: ${full.appointmentSlot}, அலைபேசி: ${full.phone}. நான் பதிவு செய்யவா? 'ஆம்' அல்லது 'Confirm' என்று சொல்லுங்கள்.`,
+        kn: `ವಿವರಗಳು: ರೋಗಿ ${full.name}, ವಯಸ್ಸು ${full.age}, ಆಸ್ಪತ್ರೆ: ${full.hospitalName}, ವಿಭಾಗ: ${full.departmentName}, ಸಮಯ: ${full.appointmentSlot}, ಮೊಬೈಲ್: ${full.phone}. ನಾನು ಬುಕ್ ಮಾಡಲೇ? 'ಹೌದು' ಅಥವಾ 'Confirm' ಎಂದು ಹೇಳಿ.`,
+        ml: `വിവരങ്ങൾ: രോഗി ${full.name}, പ്രായം ${full.age}, ആശുപത്രി: ${full.hospitalName}, വിഭാഗം: ${full.departmentName}, സമയം: ${full.appointmentSlot}, ഫോൺ: ${full.phone}. ഞാൻ ബുക്ക് ചെയ്യട്ടെ? 'അതെ' അല്ലെങ്കിൽ 'Confirm' എന്ന് പറയൂ.`,
+        bn: `বিবরণ: রোগী ${full.name}, বয়স ${full.age}, হাসপাতাল: ${full.hospitalName}, বিভাগ: ${full.departmentName}, সময়: ${full.appointmentSlot}, ফোন: ${full.phone}। আমি কি বুক করব? 'হ্যাঁ' বা 'Confirm' বলুন।`,
+        mr: `तपशील: रुग्ण ${full.name}, वय ${full.age}, रुग्णालय: ${full.hospitalName}, विभाग: ${full.departmentName}, वेळ: ${full.appointmentSlot}, फोन: ${full.phone}. मी नोंदणी पक्की करू का? 'हो' किंवा 'Confirm' म्हणा.`,
+        gu: `વિગતો: દર્દી ${full.name}, ઉંમર ${full.age}, હોસ્પિટલ: ${full.hospitalName}, વિભાગ: ${full.departmentName}, સમય: ${full.appointmentSlot}, ફોન: ${full.phone}. હું બુક કરી દઉં? 'હા' અથવા 'Confirm' કહો.`,
+        pa: `ਵੇਰਵੇ: ਮਰੀਜ਼ ${full.name}, ਉਮਰ ${full.age}, ਹਸਪਤਾਲ: ${full.hospitalName}, ਵਿਭਾਗ: ${full.departmentName}, ਸਮਾਂ: ${full.appointmentSlot}, ਫ਼ੋਨ: ${full.phone}। ਕੀ ਮੈਂ ਬੁੱਕ ਕਰ ਦੇਵਾਂ? 'ਹਾਂ' ਜਾਂ 'Confirm' ਕਹੋ।`,
+      },
+      confirmed: {
+        en: 'Verbal confirmation received! Finalizing your appointment...',
+        hi: 'मौखिक पुष्टि प्राप्त हुई! आपकी ओपीडी पर्ची दर्ज की जा रही है...',
+        te: 'నిర్ధారణ స్వీకరించబడింది! మీ అపాయింట్‌మెంట్ నమోదు చేయబడుతోంది...',
+        ta: 'உறுதிப்படுத்தல் பெறப்பட்டது! உங்கள் முன்பதிவு செய்யப்படுகிறது...',
+        kn: 'ದೃಢೀಕರಣ ಸ್ವೀಕರಿಸಲಾಗಿದೆ! ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್ ಬುಕ್ ಆಗುತ್ತಿದೆ...',
+        ml: 'സ്ഥിരീകരണം ലഭിച്ചു! ഒപിഡി ബുക്കിംഗ് പൂർത്തിയാക്കുന്നു...',
+        bn: 'নিশ্চিতকরণ গৃহীত হয়েছে! অ্যাপয়েন্টমেন্ট বুক করা হচ্ছে...',
+        mr: 'पुष्टीकरण मिळाले! नोंदणी केली जात आहे...',
+        gu: 'પુષ્ટિ મળી ગઈ છે! તમારી ઓપીડી બુક થઈ રહી છે...',
+        pa: 'ਪੁਸ਼ਟੀ ਪ੍ਰਾਪਤ ਹੋਈ! ਰਜਿਸਟ੍ਰੇਸ਼ਨ ਬੁੱਕ ਕੀਤੀ ਜਾ ਰਹੀ ਹੈ...',
+      },
+    };
+
+    // 10. Verbal Confirmation check
     const isAffirmative =
-      /\b(yes|confirm|proceed|okay|correct|sure|book|haan|ha|theek|sariya|avunu|hoy|registered)\b/i.test(
+      /\b(yes|confirm|proceed|okay|correct|sure|book|haan|ha|theek|sariya|avunu|sari|aam|hoy|registered|register)\b/i.test(
         lower
-      );
+      ) ||
+      lower.includes('confirm') ||
+      lower.includes('book') ||
+      lower.includes('register') ||
+      lower.includes('हाँ') ||
+      lower.includes('सरे') ||
+      lower.includes('సరే') ||
+      lower.includes('అవును') ||
+      lower.includes('சரி') ||
+      lower.includes('ஆம்') ||
+      lower.includes('ಹೌದು') ||
+      lower.includes('ಅതെ') ||
+      lower.includes('হ্যাঁ') ||
+      lower.includes('होय') ||
+      lower.includes('હા') ||
+      lower.includes('ਹਾਂ');
+
     const isComplete = Boolean(
       full.name &&
         full.age &&
@@ -554,29 +671,28 @@ export const Register: React.FC = () => {
     if (isComplete && isAffirmative) {
       return {
         extracted: updated,
-        nextQuestion: 'Confirmed! Registering your OPD appointment now...',
+        nextQuestion: clientPrompts.confirmed[currentL] || clientPrompts.confirmed.en,
         isComplete: true,
         confirmed: true,
       };
     }
 
-    // 10. Sequential questioning
+    // 11. Sequential questioning in user's language
     let nextQ = '';
     if (!full.hospitalName) {
-      nextQ =
-        'Welcome to Sahai Setu! Which hospital would you like to visit? (AIIMS New Delhi, GGH Hyderabad, Civil Hospital, Safdarjung, or SMS Hospital)';
+      nextQ = clientPrompts.hospital[currentL] || clientPrompts.hospital.en;
     } else if (!full.name) {
-      nextQ = `Understood, at ${full.hospitalName}. Could you please state the patient's full name?`;
+      nextQ = clientPrompts.name[currentL] || clientPrompts.name.en;
     } else if (!full.age) {
-      nextQ = `Thank you ${full.name}. What is the patient's age and gender?`;
+      nextQ = clientPrompts.age[currentL] || clientPrompts.age.en;
     } else if (!full.symptoms || full.symptoms.length === 0) {
-      nextQ = `What health issues or symptoms are you experiencing today?`;
+      nextQ = clientPrompts.symptoms[currentL] || clientPrompts.symptoms.en;
     } else if (!full.appointmentSlot) {
-      nextQ = `Got it. For ${full.departmentName || 'OPD'}, which slot do you prefer? (e.g. 09:00 AM - 10:00 AM, 10:00 AM - 11:00 AM, or 02:00 PM - 03:00 PM)`;
+      nextQ = clientPrompts.slot[currentL] || clientPrompts.slot.en;
     } else if (!full.phone || full.phone.length < 10) {
-      nextQ = `Almost complete! What is your 10-digit mobile number for appointment SMS and live queue notifications?`;
+      nextQ = clientPrompts.phone[currentL] || clientPrompts.phone.en;
     } else {
-      nextQ = `I have your details: ${full.name}, age ${full.age}, for ${full.departmentName} at ${full.hospitalName} on ${full.appointmentDate} (${full.appointmentSlot}). Mobile: ${full.phone}. Would you like me to book this appointment? Say "Yes" or "Confirm".`;
+      nextQ = clientPrompts.confirmation[currentL] || clientPrompts.confirmation.en;
     }
 
     return {
@@ -804,6 +920,43 @@ export const Register: React.FC = () => {
       setAgentLoading(false);
     }
   };
+
+  // Hands-free auto-start when directed from Landing Voice Assistant or ?autoStart=true
+  const location = useLocation();
+  const initialProcessedRef = useRef(false);
+
+  useEffect(() => {
+    if (activePath !== 'voice') return;
+    if (initialProcessedRef.current) return;
+
+    const autoStart = searchParams.get('autoStart') === 'true';
+    const stateQuery = (location.state as any)?.initialVoiceQuery;
+
+    if (stateQuery && typeof stateQuery === 'string' && stateQuery.trim()) {
+      initialProcessedRef.current = true;
+      handleSendVoiceMessage(stateQuery.trim());
+    } else if (autoStart) {
+      initialProcessedRef.current = true;
+      const welcomeMap: Record<LanguageCode, string> = {
+        en: 'Welcome to Sahai Setu Voice OPD Registration! Which hospital would you like to visit? You can say AIIMS New Delhi, Government General Hospital, or Civil Hospital.',
+        hi: 'नमस्ते! सहाय सेतु ओपीडी वॉयस पंजीकरण में आपका स्वागत है। आप किस अस्पताल में दिखाना चाहते हैं? (जैसे एम्स नई दिल्ली, सफदरजंग, या जिला अस्पताल)',
+        te: 'నమస్కారం! సహాయ సేతు ఓపీడీ వాయిస్ నమోదుకు స్వాగతం. మీరు ఏ ఆసుపత్రిని ఎంచుకోవాలనుకుంటున్నారు?',
+        ta: 'வணக்கம்! சஹாய் சேது ஓபிடி குரல் பதிவிற்கு வரவேற்கிறோம். எந்த மருத்துவமனைக்கு செல்ல விரும்புகிறீர்கள்?',
+        kn: 'ನಮಸ್ಕಾರ! ಸಹಾಯ್ ಸೇತು ಒಪಿಡಿ ಧ್ವನಿ ನೋಂದಣಿಗೆ ಸುಸ್ವಾಗತ. ಯಾವ ಆಸ್ಪತ್ರೆಗೆ ಭೇಟಿ ನೀಡಲು ಬಯಸುತ್ತೀರಿ?',
+        ml: 'നമസ്കാരം! സഹായ് സേതു ഒപിഡി വോയ്സ് രജിസ്ട്രേഷനിലേക്ക് സ്വാഗതം. ഏത് ആശുപത്രിയിലാണ് കാണിക്കേണ്ടത്?',
+        bn: 'নমস্কার! সহায় সেতু ওপিডি ভয়েস নিবন্ধনে স্বাগতম। আপনি কোন হাসপাতালে যেতে চান?',
+        mr: 'नमस्कार! सहाय सेतू ओपीडी व्हॉइस नोंदणीमध्ये आपले स्वागत आहे. आपण कोणत्या रुग्णालयात जाऊ इच्छिता?',
+        gu: 'નમસ્તે! સહાય સેતુ ઓપીડી વૉઇસ નોંધણીમાં તમારું સ્વાગત છે. તમે કઈ હોસ્પિટલમાં બતાવવા માંગો છો?',
+        pa: 'ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਸਹਾਏ ਸੇਤੂ ਓਪੀਡੀ ਵੌਇਸ ਰਜਿਸਟ੍ਰੇਸ਼ਨ ਵਿੱਚ ਤੁਹਾਡਾ ਸੁਆਗਤ ਹੈ। ਤੁਸੀਂ ਕਿਸ ਹਸਪਤਾਲ ਜਾਣਾ ਚਾਹੁੰਦੇ ਹੋ?',
+      };
+      const welcomeMsg = welcomeMap[(i18n.language as LanguageCode) || 'en'] || welcomeMap.en;
+      setIsSpeaking(true);
+      speakText(welcomeMsg, (i18n.language as LanguageCode) || 'en', () => {
+        setIsSpeaking(false);
+        toggleMic();
+      });
+    }
+  }, [activePath, searchParams, location.state, i18n.language]);
 
   // ABHA Lookup handler (Path B)
   const handleAbhaLookup = async () => {

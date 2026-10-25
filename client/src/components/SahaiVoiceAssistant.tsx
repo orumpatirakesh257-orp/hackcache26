@@ -207,20 +207,65 @@ export const SahaiVoiceAssistant: React.FC<SahaiVoiceAssistantProps> = ({
       // Default to registration
       setActionButton({
         label: data.actionLabel || t('startOpdRegistration'),
-        onClick: () => navigate(data.actionTarget || '/register'),
+        onClick: () => navigate(data.actionTarget || '/register?mode=voice&autoStart=true'),
         icon: <ClipboardPlus size={18} />,
         variant: 'primary',
       });
+
+      // If user explicitly asked for registration or doctor consultation by voice, auto-start voice registration
+      const lowerQ = (transcript || '').toLowerCase();
+      const isVoiceRegIntent =
+        data.actionType === 'register' ||
+        lowerQ.includes('register') ||
+        lowerQ.includes('opd') ||
+        lowerQ.includes('book') ||
+        lowerQ.includes('doctor') ||
+        lowerQ.includes('पंजीकरण') ||
+        lowerQ.includes('रजिस्टर') ||
+        lowerQ.includes('నమోదు') ||
+        lowerQ.includes('பதிவு') ||
+        lowerQ.includes('નોંધણી') ||
+        lowerQ.includes('ನೋಂದಣಿ') ||
+        lowerQ.includes('രജിസ്ട്രേഷൻ') ||
+        lowerQ.includes('নিবন্ধন');
+
+      if (isVoiceRegIntent) {
+        const autoVoiceSpeechMap: Record<LanguageCode, string> = {
+          te: 'ఓపీడీ వాయిస్ రిజిస్ట్రేషన్ ప్రారంభించబడుతోంది. దయచేసి వివరాలు చెప్పండి.',
+          hi: 'ओपीडी वॉयस पंजीकरण शुरू किया जा रहा है। कृपया बोलकर विवरण बताएं।',
+          ta: 'ஓபிடி குரல் பதிவு தொடங்குகிறது. உங்கள் விவரங்களைச் சொல்லுங்கள்.',
+          kn: 'ಒಪಿಡಿ ಧ್ವನಿ ನೋಂದಣಿ ಪ್ರಾರಂಭವಾಗುತ್ತಿದೆ. ದಯವಿಟ್ಟು ವಿವರಗಳನ್ನು ತಿಳಿಸಿ.',
+          ml: 'ഒപിഡി വോയ്സ് രജിസ്ട്രേഷൻ ആരംഭിക്കുന്നു. വിവരങ്ങൾ പറയൂ.',
+          bn: 'ওপিডি ভয়েস রেজিস্ট্রেশন শুরু হচ্ছে। অনুগ্রহ করে বিস্তারিত বলুন।',
+          mr: 'ओपीडी व्हॉइस नोंदणी सुरू होत आहे. कृपया माहिती सांगा.',
+          gu: 'ઓપીડી વૉઇસ નોંધણી શરૂ થઈ રહી છે. કૃપા કરીને વિગતો જણાવો.',
+          pa: 'ਓਪੀਡੀ ਵੌਇਸ ਰਜਿਸਟ੍ਰੇਸ਼ਨ ਸ਼ੁਰੂ ਹੋ ਰਹੀ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਵੇਰਵੇ ਦੱਸੋ।',
+          en: 'Starting voice OPD registration now. Please speak your details.',
+        };
+        const speechMsg = autoVoiceSpeechMap[currentLang] || autoVoiceSpeechMap.en;
+        speakAssistantResponse(speechMsg, () => {
+          navigate('/register?mode=voice&autoStart=true', {
+            state: { initialVoiceQuery: transcript },
+          });
+        });
+        setTimeout(() => {
+          navigate('/register?mode=voice&autoStart=true', {
+            state: { initialVoiceQuery: transcript },
+          });
+        }, 2200);
+        return;
+      }
     }
 
     // Speak aloud in user's language
     speakAssistantResponse(data.reply);
   };
 
-  const speakAssistantResponse = async (text: string) => {
+  const speakAssistantResponse = async (text: string, onEnd?: () => void) => {
     setIsSpeaking(true);
     await speakText(text, currentLang, () => {
       setIsSpeaking(false);
+      onEnd?.();
     });
   };
 

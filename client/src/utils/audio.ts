@@ -115,10 +115,12 @@ export async function speakText(
 
     const data = await res.json();
 
-    if (data.engine === 'elevenlabs' && data.audioBase64) {
-      activeEngine = 'elevenlabs';
+    // 1. If server synthesized pristine audio (ElevenLabs or Neural Google TTS), play it directly
+    if (data.audioBase64) {
+      activeEngine = data.engine || 'elevenlabs';
       const audio = new Audio(data.audioBase64);
       currentAudio = audio;
+
       audio.onended = () => {
         currentAudio = null;
         if (onEndCallback) {
@@ -126,67 +128,112 @@ export async function speakText(
           onEndCallback = null;
         }
       };
-      audio.onerror = () => {
+
+      audio.onerror = (e) => {
+        console.warn('Audio playback error, trying web speech fallback', e);
         currentAudio = null;
-        if (onEndCallback) {
-          onEndCallback();
-          onEndCallback = null;
-        }
+        speakViaWebSpeech(text, lang, onEndCallback);
       };
-      await audio.play();
-      return 'elevenlabs';
+
+      try {
+        await audio.play();
+        return activeEngine;
+      } catch (playErr) {
+        console.warn('Audio play() rejected, falling back to Web Speech', playErr);
+      }
     }
   } catch (err) {
-    console.warn('ElevenLabs API request failed, falling back to Web Speech API', err);
+    console.warn('Audio synthesis endpoint unavailable, falling back to Web Speech API', err);
   }
 
-  // Fallback: Browser Web Speech API
+  // 2. Resilient Browser Web Speech API fallback with explicit Indic voice matching
   activeEngine = 'webspeech';
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
+  speakViaWebSpeech(text, lang, onEndCallback);
+  return 'webspeech';
+}
 
-    // Language code map
-    const langMap: Record<LanguageCode, string> = {
-      en: 'en-IN',
-      hi: 'hi-IN',
-      ta: 'ta-IN',
-      te: 'te-IN',
-      kn: 'kn-IN',
-      ml: 'ml-IN',
-      bn: 'bn-IN',
-      mr: 'mr-IN',
-      gu: 'gu-IN',
-      pa: 'pa-IN',
-    };
+/**
+ * Robust fallback using the browser's native SpeechSynthesis API
+ * Explicitly matches the optimal regional voice rather than defaulting to English
+ */
+function speakViaWebSpeech(text: string, lang: LanguageCode, onEnd?: (() => void) | null) {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+    onEnd?.();
+    return;
+  }
 
-    utterance.lang = langMap[lang] || 'en-IN';
-    utterance.rate = 0.9; // Slightly slower, clear cadence for accessibility
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
 
-    utterance.onend = () => {
-      if (onEndCallback) {
-        onEndCallback();
-        onEndCallback = null;
-      }
-    };
+  const langMap: Record<LanguageCode, string> = {
+    en: 'en-IN',
+    hi: 'hi-IN',
+    ta: 'ta-IN',
+    te: 'te-IN',
+    kn: 'kn-IN',
+    ml: 'ml-IN',
+    bn: 'bn-IN',
+    mr: 'mr-IN',
+    gu: 'gu-IN',
+    pa: 'pa-IN',
+  };
 
-    utterance.onerror = () => {
-      if (onEndCallback) {
-        onEndCallback();
-        onEndCallback = null;
-      }
-    };
+  const targetLang = langMap[lang] || 'en-IN';
+  utterance.lang = targetLang;
+  utterance.rate = 0.95; // Clear natural pace
 
-    window.speechSynthesis.speak(utterance);
-  } else {
-    // Neither supported
+  // Find the best voice for this language
+  const voices = window.speechSynthesis.getVoices();
+  if (voices && voices.length > 0) {
+    // 1. Exact match (e.g. 'te-IN')
+    let matched = voices.find((v) => v.lang === targetLang || v.lang.replace('_', '-') === targetLang);
+
+    // 2. Prefix match (e.g. starts with 'te')
+    if (!matched) {
+      matched = voices.find((v) => v.lang.toLowerCase().startsWith(lang.toLowerCase()));
+    }
+
+    // 3. Name match for Indic voices
+    if (!matched) {
+      const nameKeywords: Record<LanguageCode, string[]> = {
+        en: ['india', 'indian', 'english'],
+        hi: ['hindi', 'हिन्दी', 'kalpana', 'hemant'],
+        te: ['telugu', 'తెలుగు', 'chitra', 'mohan'],
+        ta: ['tamil', 'தமிழ்', 'valluvar'],
+        kn: ['kannada', 'ಕನ್ನಡ'],
+        ml: ['malayalam', 'മലയാളം'],
+        bn: ['bengali', 'bangla', 'বাংলা'],
+        mr: ['marathi', 'मराठी'],
+        gu: ['gujarati', 'ગુજરાતી'],
+        pa: ['punjabi', 'ਪੰਜਾਬੀ'],
+      };
+      const kwList = nameKeywords[lang] || [];
+      matched = voices.find((v) => {
+        const vName = v.name.toLowerCase();
+        return kwList.some((kw) => vName.includes(kw));
+      });
+    }
+
+    if (matched) {
+      utterance.voice = matched;
+    }
+  }
+
+  utterance.onend = () => {
     if (onEndCallback) {
       onEndCallback();
       onEndCallback = null;
     }
-  }
+  };
 
-  return 'webspeech';
+  utterance.onerror = () => {
+    if (onEndCallback) {
+      onEndCallback();
+      onEndCallback = null;
+    }
+  };
+
+  window.speechSynthesis.speak(utterance);
 }
 
 export function stopSpeaking() {

@@ -1,6 +1,7 @@
 import { testQueueLogic } from './queue.test';
 import { testNavigationLogic } from './navigation.test';
 import { testEmergencyLogic } from './emergency.test';
+import { testVoiceRegistrationLogic } from './voiceRegistration.test';
 
 async function run() {
   console.log(`===============================================`);
@@ -11,6 +12,7 @@ async function run() {
     testQueueLogic();
     testNavigationLogic();
     testEmergencyLogic();
+    await testVoiceRegistrationLogic();
 
     console.log(`===============================================`);
     console.log(`  ✅ ALL TESTS PASSED SUCCESSFULLY!`);

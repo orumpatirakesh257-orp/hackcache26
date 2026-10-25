@@ -334,27 +334,44 @@ Respond strictly with valid JSON only in this schema:
     const lower = text.toLowerCase();
 
     // 1. Verbal Confirmation detection
-    if (extracted.isComplete) {
-      if (
-        /^(yes|yeah|yep|confirm|book|proceed|ok|okay|sure|ha|haan|sahi|sahi hai|theek|sare|khararu|aam|aamaam|sari)\b/i.test(
-          lower
-        ) ||
-        lower.includes('confirm') ||
-        lower.includes('book') ||
-        lower.includes('हाँ') ||
-        lower.includes('సరే') ||
-        lower.includes('சரி')
-      ) {
-        updated.isComplete = true;
-        updated.confirmed = true;
-        updated.nextQuestion =
-          lang === 'hi'
-            ? 'धन्यवाद! आपकी ओपीडी पर्ची अस्पताल डेटाबेस में दर्ज हो रही है...'
-            : lang === 'te'
-            ? 'ధన్యవాదాలు! మీ అపాయింట్‌మెంట్ రికార్డ్ సేవ్ చేయబడుతోంది...'
-            : 'Thank you! Confirming and saving your registration in the hospital system...';
-        return updated;
-      }
+    const isAffirmative =
+      /^(yes|yeah|yep|confirm|book|proceed|ok|okay|sure|ha|haan|sahi|theek|sare|avunu|sari|aam|hoy|registered|register)\b/i.test(
+        lower
+      ) ||
+      lower.includes('confirm') ||
+      lower.includes('book') ||
+      lower.includes('register') ||
+      lower.includes('हाँ') ||
+      lower.includes('सरे') ||
+      lower.includes('సరే') ||
+      lower.includes('అవును') ||
+      lower.includes('சரி') ||
+      lower.includes('ஆம்') ||
+      lower.includes('ಹೌದು') ||
+      lower.includes('ಅതെ') ||
+      lower.includes('হ্যাঁ') ||
+      lower.includes('होय') ||
+      lower.includes('હા') ||
+      lower.includes('ਹਾਂ');
+
+    if (extracted.isComplete && isAffirmative) {
+      const confirmReplies: Record<LanguageCode, string> = {
+        en: 'Thank you! Confirming and saving your registration in the hospital system...',
+        hi: 'धन्यवाद! आपकी ओपीडी पर्ची अस्पताल डेटाबेस में दर्ज हो रही है...',
+        te: 'ధన్యవాదాలు! మీ అపాయింట్‌మెంట్ రికార్డ్ సేవ్ చేయబడుతోంది...',
+        ta: 'நன்றி! உங்கள் ஓபிடி பதிவு மருத்துவமனை அமைப்பில் சேமிக்கப்படுகிறது...',
+        kn: 'ಧನ್ಯವಾದಗಳು! ನಿಮ್ಮ ಒಪಿಡಿ ನೋಂದಣಿ ಉಳಿಸಲಾಗುತ್ತಿದೆ...',
+        ml: 'നന്ദി! നിങ്ങളുടെ ഒപിഡി രജിസ്ട്രേഷൻ രേഖപ്പെടുത്തുന്നു...',
+        bn: 'ধন্যবাদ! আপনার ওপিডি অ্যাপয়েন্টমেন্ট সফলভাবে নিবন্ধিত হচ্ছে...',
+        mr: 'धन्यवाद! आपली ओपीडी नोंदणी रुग्णालयाच्या प्रणालीत सेव्ह केली जात आहे...',
+        gu: 'આભાર! તમારી ઓપીડી નોંધણી સિસ્ટમમાં સેવ થઈ રહી છે...',
+        pa: 'ਧੰਨਵਾਦ! ਤੁਹਾਡੀ ਓਪੀਡੀ ਰਜਿਸਟ੍ਰੇਸ਼ਨ ਸਿਸਟਮ ਵਿੱਚ ਦਰਜ ਹੋ ਰਹੀ ਹੈ...',
+      };
+
+      updated.isComplete = true;
+      updated.confirmed = true;
+      updated.nextQuestion = confirmReplies[lang] || confirmReplies.en;
+      return updated;
     }
 
     // 2. Wheelchair / Accessibility detection
@@ -487,48 +504,116 @@ Respond strictly with valid JSON only in this schema:
       }
     }
 
+    // Multilingual question dictionaries for all 10 Indic languages
+    const promptDictionaries: Record<string, Record<LanguageCode, string>> = {
+      hospital: {
+        en: 'Welcome to Sahai Setu OPD Voice Registration! Which hospital would you like to visit? You can say AIIMS New Delhi, Government General Hospital, or Civil Hospital.',
+        hi: 'नमस्ते! सहाय सेतु ओपीडी वॉयस पंजीकरण में आपका स्वागत है। आप किस अस्पताल में दिखाना चाहते हैं? (जैसे एम्स नई दिल्ली, सफदरजंग, या जिला अस्पताल)',
+        te: 'నమస్కారం! సహాయ సేతు ఓపీడీ వాయిస్ నమోదుకు స్వాగతం. మీరు ఏ ఆసుపత్రిని ఎంచుకోవాలనుకుంటున్నారు? (ఉదా. AIIMS, GGH హైదరాబాద్, లేదా జిల్లా సివిల్ ఆసుపత్రి)',
+        ta: 'வணக்கம்! சஹாய் சேது ஓபிடி குரல் பதிவிற்கு வரவேற்கிறோம். எந்த மருத்துவமனைக்கு செல்ல விரும்புகிறீர்கள்? (எ.கா. எய்ம்ஸ், அரசு பொது மருத்துவமனை, அல்லது மாவட்ட மருத்துவமனை)',
+        kn: 'ನಮಸ್ಕಾರ! ಸಹಾಯ್ ಸೇತು ಒಪಿಡಿ ಧ್ವನಿ ನೋಂದಣಿಗೆ ಸುಸ್ವಾಗತ. ನೀವು ಯಾವ ಆಸ್ಪತ್ರೆಗೆ ಭೇಟಿ ನೀಡಲು ಬಯಸುತ್ತೀರಿ? (ಉದಾ. ಏಮ್ಸ್, ಸರ್ಕಾರಿ ಸಾರ್ವಜನಿಕ ಆಸ್ಪತ್ರೆ, ಅಥವಾ ಸಿವಿಲ್ ಆಸ್ಪತ್ರೆ)',
+        ml: 'നമസ്കാരം! സഹായ് സേതു ഒപിഡി വോയ്സ് രജിസ്ട്രേഷനിലേക്ക് സ്വാഗതം. ഏത് ആശുപത്രിയിലാണ് കാണിക്കേണ്ടത്? (ഉദാ. എയിംസ്, ജനറൽ ഹോസ്പിറ്റൽ, അല്ലെങ്കിൽ ജില്ലാ ആശുപത്രി)',
+        bn: 'নমস্কার! সহায় সেতু ওপিডি ভয়েস নিবন্ধনে স্বাগতম। আপনি কোন হাসপাতালে যেতে চান? (যেমন এইমস, সরকারি জেনারেল হাসপাতাল, বা জেলা হাসপাতাল)',
+        mr: 'नमस्कार! सहाय सेतू ओपीडी व्हॉइस नोंदणीमध्ये आपले स्वागत आहे. आपण कोणत्या रुग्णालयात जाऊ इच्छिता? (उदा. एम्स, शासकीय रुग्णालय, किंवा जिल्हा रुग्णालय)',
+        gu: 'નમસ્તે! સહાય સેતુ ઓપીડી વૉઇસ નોંધણીમાં તમારું સ્વાગત છે. તમે કઈ હોસ્પિટલમાં બતાવવા માંગો છો? (જેમ કે એઇમ્સ, સિવિલ હોસ્પિટલ, અથવા જનરલ હોસ્પિટલ)',
+        pa: 'ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਸਹਾਏ ਸੇਤੂ ਓਪੀਡੀ ਵੌਇਸ ਰਜਿਸਟ੍ਰੇਸ਼ਨ ਵਿੱਚ ਤੁਹਾਡਾ ਸੁਆਗਤ ਹੈ। ਤੁਸੀਂ ਕਿਸ ਹਸਪਤਾਲ ਜਾਣਾ ਚਾਹੁੰਦੇ ਹੋ? (ਜਿਵੇਂ ਕਿ ਏਮਜ਼, ਸਰਕਾਰੀ ਜਨਰਲ ਹਸਪਤਾਲ, ਜਾਂ ਸਿਵਲ ਹਸਪਤਾਲ)',
+      },
+      name: {
+        en: "What is the patient's full name?",
+        hi: 'मरीज का पूरा नाम क्या है?',
+        te: 'రోగి పూర్తి పేరు ఏమిటి?',
+        ta: 'நோயாளியின் முழுப் பெயர் என்ன?',
+        kn: 'ರೋಗಿಯ ಪೂರ್ಣ ಹೆಸರು ಏನು?',
+        ml: 'രോഗിയുടെ മുഴുവൻ പേര് എന്താണ്?',
+        bn: 'রোগীর পুরো নাম কী?',
+        mr: 'रुग्णाचे पूर्ण नाव काय आहे?',
+        gu: 'દર્દીનું પૂરું નામ શું છે?',
+        pa: 'ਮਰੀਜ਼ ਦਾ ਪੂਰਾ ਨਾਮ ਕੀ ਹੈ?',
+      },
+      age: {
+        en: `What is ${updated.name}'s age or year of birth?`,
+        hi: `${updated.name} जी की उम्र (Age) या जन्म का वर्ष क्या है?`,
+        te: `${updated.name} గారి వయస్సు లేదా పుట్టిన సంవత్సరం ఎంత?`,
+        ta: `${updated.name} அவர்களின் வயது என்ன?`,
+        kn: `${updated.name} ಅವರ ವಯಸ್ಸು ಎಷ್ಟು?`,
+        ml: `${updated.name} എന്നയാളുടെ പ്രായം എത്രയാണ്?`,
+        bn: `${updated.name}-এর বয়স বা জন্ম সাল কত?`,
+        mr: `${updated.name} यांचे वय किती आहे?`,
+        gu: `${updated.name}ની ઉંમર કેટલી છે?`,
+        pa: `${updated.name} ਦੀ ਉਮਰ ਕਿੰਨੀ ਹੈ?`,
+      },
+      symptoms: {
+        en: `What health symptoms or complaints is ${updated.name} experiencing today? (e.g. knee pain, fever, cough)`,
+        hi: `${updated.name} जी, आपको क्या स्वास्थ्य समस्या या लक्षण हैं? (जैसे घुटने का दर्द, बुखार, खांसी)`,
+        te: `${updated.name} గారూ, మీకు ఎటువంటి ఆరోగ్య సమస్య లేదా లక్షణాలు ఉన్నాయి? (ఉదా. మోకాలి నొప్పి, జ్వరం, దగ్గు)`,
+        ta: `${updated.name} அவர்களுக்கு என்ன உடல்நல பிரச்சனை அல்லது அறிகுறிகள் உள்ளன? (எ.கா. மூட்டு வலி, காய்ச்சல், இருமல்)`,
+        kn: `${updated.name} ಅವರಿಗೆ ಯಾವ ಆರೋಗ್ಯ ಸಮಸ್ಯೆ ಅಥವಾ ಲಕ್ಷಣಗಳಿವೆ? (ಉದಾ. ಮೊಣಕಾಲು ನೋವು, ಜ್ವರ, ಕೆಮ್ಮು)`,
+        ml: `${updated.name} എന്നയാൾക്ക് എന്തൊക്കെ ബുദ്ധിമുട്ടുകൾ അല്ലെങ്കിൽ ലക്ഷണങ്ങളാണ് ഉള്ളത്? (ഉദാ. കാൽമുട്ട് വേദന, പനി, ചുമ)`,
+        bn: `${updated.name}-এর কী শারীরিক সমস্যা বা লক্ষণ দেখা দিচ্ছে? (যেমন হাঁটুর ব্যথা, জ্বর, কাশি)`,
+        mr: `${updated.name} यांना काय त्रास किंवा लक्षणे जाणवत आहेत? (उदा. गुडघेदुखी, ताप, खोकला)`,
+        gu: `${updated.name}ને કઈ તકલીફ કે લક્ષણો છે? (જેમ કે ઘૂંટણનો દુખાવો, તાવ, ખાંસી)`,
+        pa: `${updated.name} ਨੂੰ ਕੀ ਸਿਹਤ ਸੰਬੰਧੀ ਸਮੱਸਿਆ ਜਾਂ ਲੱਛਣ ਹਨ? (ਜਿਵੇਂ ਕਿ ਗੋਡੇ ਦਾ ਦਰਦ, ਬੁਖ਼ਾਰ, ਖੰਘ)`,
+      },
+      slot: {
+        en: 'Which appointment time slot do you prefer? Available slots: 10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM, or 02:00 PM - 03:00 PM.',
+        hi: 'आप किस समय का ओपीडी स्लॉट चाहते हैं? उपलब्ध स्लॉट: 10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM, या दोपहर 02:00 PM - 03:00 PM।',
+        te: 'మీరు ఏ సమయం స్లాట్ కావాలనుకుంటున్నారు? అందుబాటులో ఉన్న స్లాట్లు: 10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM, లేదా 02:00 PM - 03:00 PM.',
+        ta: 'நீங்கள் எந்த நேர ஸ்லாட்டை விரும்புகிறீர்கள்? கிடைக்கும் ஸ்லாட்டுகள்: 10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM, அல்லது 02:00 PM - 03:00 PM.',
+        kn: 'ನೀವು ಯಾವ ಸಮಯದ ಸ್ಲಾಟ್ ಬಯಸುತ್ತೀರಿ? ಲಭ್ಯವಿರುವ ಸ್ಲಾಟ್‌ಗಳು: 10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM, ಅಥವಾ 02:00 PM - 03:00 PM.',
+        ml: 'ഏത് സമയ സ്ലോട്ടാണ് താല്പര്യം? ലഭ്യമായ സ്ലോട്ടുകൾ: 10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM, അല്ലെങ്കിൽ 02:00 PM - 03:00 PM.',
+        bn: 'আপনি কোন সময়ের ওপিডি স্লট নিতে চান? উপলব্ধ স্লট: 10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM, বা দুপুর 02:00 PM - 03:00 PM।',
+        mr: 'तुम्हाला कोणत्या वेळेचा ओपीडी स्लॉट हवा आहे? उपलब्ध स्लॉट: 10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM, किंवा दुपारी 02:00 PM - 03:00 PM.',
+        gu: 'તમે કયા સમયનો ઓપીડી સ્લોટ પસંદ કરશો? ઉપલબ્ધ સ્લોટ: 10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM, અથવા બપોરે 02:00 PM - 03:00 PM.',
+        pa: 'ਤੁਸੀਂ ਕਿਸ ਸਮੇਂ ਦਾ ਓਪੀਡੀ ਸਲਾਟ ਲੈਣਾ ਚਾਹੁੰਦੇ ਹੋ? ਉਪਲਬਧ ਸਲਾਟ: 10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM, ਜਾਂ ਦੁਪਹਿਰ 02:00 PM - 03:00 PM।',
+      },
+      phone: {
+        en: 'Please tell me your 10-digit mobile number so we can send your digital OPD slip and live queue alerts.',
+        hi: 'कृपया अपना 10 अंकों का मोबाइल नंबर बताएं ताकि डिजिटल पर्ची और टोकन का एसएमएस भेजा जा सके।',
+        te: 'దయచేసి మీ 10 అంకెల మొబైల్ నంబర్ చెప్పండి, తద్వారా డిజిటల్ స్లిప్ మరియు టోకెన్ SMS పంపబడుతుంది.',
+        ta: 'டிஜிட்டல் ரசீது மற்றும் நேரடி டோக்கன் எஸ்எம்எஸ் பெற தயவுசெய்து உங்கள் 10 இலக்க மொபைல் எண்ணைக் கூறவும்.',
+        kn: 'ಡಿಜಿಟಲ್ ಸ್ಲಿಪ್ ಮತ್ತು ಲೈವ್ ಟೋಕನ್ ಎಸ್‌ಎಂಎಸ್ ಪಡೆಯಲು ದಯವಿಟ್ಟು ನಿಮ್ಮ 10 ಅಂಕಿಗಳ ಮೊಬೈಲ್ ಸಂಖ್ಯೆ ತಿಳಿಸಿ.',
+        ml: 'ഡിജിറ്റൽ സ്ലിപ്പും തത്സമയ ടോക്കൺ വിവരങ്ങളും ലഭിക്കുന്നതിന് ദയവായി നിങ്ങളുടെ 10 അക്ക മൊബൈൽ നമ്പർ പറയൂ.',
+        bn: 'ডিজিটাল স্লিপ এবং লাইভ টোকেনের এসএমএস পেতে অনুগ্রহ করে আপনার ১০ সংখ্যার মোবাইল নম্বরটি বলুন।',
+        mr: 'डिजिटल पावती आणि थेट टोकन एसएमएससाठी कृपया आपला १० अंकी मोबाईल नंबर सांगा.',
+        gu: 'ડિજિટલ સ્લિપ અને લાઇવ ટોકન એસએમએસ માટે કૃપા કરીને તમારો ૧૦ અંકનો મોબાઈલ નંબર જણાવો.',
+        pa: 'ਡਿਜੀਟਲ ਪਰਚੀ ਅਤੇ ਲਾਈਵ ਟੋਕਨ ਐਸਐਮਐਸ ਲਈ ਕਿਰਪਾ ਕਰਕੇ ਆਪਣਾ 10 ਅੰਕਾਂ ਦਾ ਮੋਬਾਈਲ ਨੰਬਰ ਦੱਸੋ।',
+      },
+      confirmation: {
+        en: `Please confirm your OPD details: Patient: ${updated.name}, Age: ${updated.age}, Hospital: ${updated.hospitalName}, Department: ${updated.departmentName}, Slot: ${updated.appointmentSlot}, Mobile: ${updated.phone}. Shall I book this appointment for you? Please say 'Yes' or 'Confirm'.`,
+        hi: `कृपया विवरण की पुष्टि करें: मरीज ${updated.name}, उम्र ${updated.age}, अस्पताल: ${updated.hospitalName}, विभाग: ${updated.departmentName}, समय: ${updated.appointmentSlot}, फोन: ${updated.phone}। क्या मैं यह पंजीकरण बुक कर दूं? कृपया 'हाँ' या 'Confirm' कहें।`,
+        te: `దయచేసి వివరాలను నిర్ధారించండి: రోగి ${updated.name}, వయస్సు ${updated.age}, ఆసుపత్రి: ${updated.hospitalName}, విభాగం: ${updated.departmentName}, సమయం: ${updated.appointmentSlot}, ఫోన్: ${updated.phone}. నేను ఈ రిజిస్ట్రేషన్ ఖరారు చేయమంటారా? దయచేసి 'సరే' లేదా 'Confirm' అని చెప్పండి.`,
+        ta: `விவரங்களை உறுதிப்படுத்தவும்: நோயாளி ${updated.name}, வயது ${updated.age}, மருத்துவமனை: ${updated.hospitalName}, துறை: ${updated.departmentName}, நேரம்: ${updated.appointmentSlot}, அலைபேசி: ${updated.phone}. நான் இந்த பதிவை உறுதிசெய்யவா? 'ஆம்' அல்லது 'Confirm' என்று சொல்லுங்கள்.`,
+        kn: `ವಿವರಗಳನ್ನು ದೃಢೀಕರಿಸಿ: ರೋಗಿ ${updated.name}, ವಯಸ್ಸು ${updated.age}, ಆಸ್ಪತ್ರೆ: ${updated.hospitalName}, ವಿಭಾಗ: ${updated.departmentName}, ಸಮಯ: ${updated.appointmentSlot}, ಮೊಬೈಲ್: ${updated.phone}. ನಾನು ಈ ನೋಂದಣಿಯನ್ನು ಬುಕ್ ಮಾಡಲೇ? ದಯವಿಟ್ಟು 'ಹೌದು' ಅಥವಾ 'Confirm' ಎಂದು ಹೇಳಿ.`,
+        ml: `വിവരങ്ങൾ സ്ഥിരീകരിക്കുക: രോഗി ${updated.name}, പ്രായം ${updated.age}, ആശുപത്രി: ${updated.hospitalName}, വിഭാഗം: ${updated.departmentName}, സമയം: ${updated.appointmentSlot}, ഫോൺ: ${updated.phone}. ഞാൻ ഈ അപ്പോയിന്റ്മെന്റ് ബുക്ക് ചെയ്യട്ടെ? 'അതെ' അല്ലെങ്കിൽ 'Confirm' എന്ന് പറയൂ.`,
+        bn: `অনুগ্রহ করে বিবরণ নিশ্চিত করুন: রোগী ${updated.name}, বয়স ${updated.age}, হাসপাতাল: ${updated.hospitalName}, বিভাগ: ${updated.departmentName}, সময়: ${updated.appointmentSlot}, ফোন: ${updated.phone}। আমি কি এই ওপিডি বুকিং করব? দয়া করে 'হ্যাঁ' বা 'Confirm' বলুন।`,
+        mr: `कृपया तपशील तपासा: रुग्ण ${updated.name}, वय ${updated.age}, रुग्णालय: ${updated.hospitalName}, विभाग: ${updated.departmentName}, वेळ: ${updated.appointmentSlot}, फोन: ${updated.phone}. मी ही नोंदणी पक्की करू का? कृपया 'हो' किंवा 'Confirm' म्हणा.`,
+        gu: `કૃપા કરીને વિગતોની પુષ્ટિ કરો: દર્દી ${updated.name}, ઉંમર ${updated.age}, હોસ્પિટલ: ${updated.hospitalName}, વિભાગ: ${updated.departmentName}, સમય: ${updated.appointmentSlot}, ફોન: ${updated.phone}. શું હું આ ઓપીડી બુક કરી દઉં? કૃપા કરીને 'હા' અથવા 'Confirm' કહો.`,
+        pa: `ਕਿਰਪਾ ਕਰਕੇ ਵੇਰਵਿਆਂ ਦੀ ਪੁਸ਼ਟੀ ਕਰੋ: ਮਰੀਜ਼ ${updated.name}, ਉਮਰ ${updated.age}, ਹਸਪਤਾਲ: ${updated.hospitalName}, ਵਿਭਾਗ: ${updated.departmentName}, ਸਮਾਂ: ${updated.appointmentSlot}, ਫ਼ੋਨ: ${updated.phone}। ਕੀ ਮੈਂ ਇਹ ਓਪੀਡੀ ਬੁਕਿੰਗ ਕਰ ਦੇਵਾਂ? ਕਿਰਪਾ ਕਰਕੇ 'ਹਾਂ' ਜਾਂ 'Confirm' ਕਹੋ।`,
+      },
+    };
+
     // Determine the NEXT question step by step
     // Priority 1: Hospital
     if (!updated.hospitalName) {
-      updated.nextQuestion =
-        lang === 'hi'
-          ? 'नमस्ते! सहाय सेतु में आपका स्वागत है। आप किस अस्पताल में दिखाना चाहते हैं? (जैसे एम्स नई दिल्ली, सफदरजंग, या जिला अस्पताल)'
-          : lang === 'te'
-          ? 'నమస్కారం! సహాయ సేతుకు స్వాగతం. మీరు ఏ ఆసుపత్రిని ఎంచుకోవాలనుకుంటున్నారు? (ఉదా. AIIMS, GGH హైదరాబాద్, లేదా జిల్లా సివిల్ ఆసుపత్రి)'
-          : 'Welcome to Sahai Setu OPD Voice Registration! Which hospital would you like to visit? You can say AIIMS New Delhi, Government General Hospital, or District Civil Hospital.';
+      updated.nextQuestion = promptDictionaries.hospital[lang] || promptDictionaries.hospital.en;
       return updated;
     }
 
     // Priority 2: Patient Name
     if (!updated.name) {
-      updated.nextQuestion =
-        lang === 'hi'
-          ? 'मरीज का पूरा नाम क्या है?'
-          : lang === 'te'
-          ? 'రోగి పూర్తి పేరు ఏమిటి?'
-          : "What is the patient's full name?";
+      updated.nextQuestion = promptDictionaries.name[lang] || promptDictionaries.name.en;
       return updated;
     }
 
     // Priority 3: Age
     if (!updated.age) {
-      updated.nextQuestion =
-        lang === 'hi'
-          ? `${updated.name} जी की उम्र (Age) या जन्म का वर्ष क्या है?`
-          : lang === 'te'
-          ? `${updated.name} గారి వయస్సు లేదా పుట్టిన సంవత్సరం ఎంత?`
-          : `What is ${updated.name}'s age or year of birth?`;
+      updated.nextQuestion = promptDictionaries.age[lang] || promptDictionaries.age.en;
       return updated;
     }
 
     // Priority 4: Symptoms & Consultation reason
     if (!updated.symptoms || updated.symptoms.length === 0) {
-      updated.nextQuestion =
-        lang === 'hi'
-          ? `${updated.name} जी, आपको क्या स्वास्थ्य समस्या या लक्षण हैं? (जैसे घुटने का दर्द, बुखार, खांसी)`
-          : lang === 'te'
-          ? `${updated.name} గారూ, మీకు ఎటువంటి ఆరోగ్య సమస్య లేదా లక్షణాలు ఉన్నాయి? (ఉదా. మోకాలి నొప్పి, జ్వరం, దగ్గు)`
-          : `What health symptoms or complaints is ${updated.name} experiencing today? (e.g. knee pain, fever, cough)`;
+      updated.nextQuestion = promptDictionaries.symptoms[lang] || promptDictionaries.symptoms.en;
       return updated;
     }
 
@@ -536,35 +621,20 @@ Respond strictly with valid JSON only in this schema:
     if (!updated.appointmentDate || !updated.appointmentSlot) {
       if (!updated.appointmentDate) updated.appointmentDate = todayStr;
       if (!updated.appointmentSlot) {
-        updated.nextQuestion =
-          lang === 'hi'
-            ? 'आप किस समय का ओपीडी स्लॉट चाहते हैं? उपलब्ध स्लॉट: 10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM, या दोपहर 02:00 PM - 03:00 PM'
-            : lang === 'te'
-            ? 'మీరు ఏ సమయం స్లాట్ కావాలనుకుంటున్నారు? అందుబాటులో ఉన్న స్లాట్లు: 10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM, లేదా 02:00 PM - 03:00 PM'
-            : 'Which appointment time slot do you prefer? Available slots: 10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM, or 02:00 PM - 03:00 PM.';
+        updated.nextQuestion = promptDictionaries.slot[lang] || promptDictionaries.slot.en;
         return updated;
       }
     }
 
     // Priority 6: Mobile Number
     if (!updated.phone) {
-      updated.nextQuestion =
-        lang === 'hi'
-          ? 'कृपया अपना 10 अंकों का मोबाइल नंबर बताएं ताकि डिजिटल पर्ची और टोकन का एसएमएस भेजा जा सके।'
-          : lang === 'te'
-          ? 'దయచేసి మీ 10 అంకెల మొబైల్ నంబర్ చెప్పండి, తద్వారా డిజిటల్ స్లిప్ మరియు టోకెన్ SMS పంపబడుతుంది.'
-          : 'Please tell me your 10-digit mobile number so we can send your digital OPD slip and live queue alerts.';
+      updated.nextQuestion = promptDictionaries.phone[lang] || promptDictionaries.phone.en;
       return updated;
     }
 
     // All fields collected! Ask for patient confirmation before registering.
     updated.isComplete = true;
-    updated.nextQuestion =
-      lang === 'hi'
-        ? `कृपया विवरण की पुष्टि करें: मरीज ${updated.name}, उम्र ${updated.age}, अस्पताल: ${updated.hospitalName}, विभाग: ${updated.departmentName}, समय: ${updated.appointmentSlot}, फोन: ${updated.phone}। क्या मैं यह ओपीडी पंजीकरण बुक कर दूं? कृपया 'हाँ' या 'Confirm' कहें।`
-        : lang === 'te'
-        ? `దయచేసి వివరాలను నిర్ధారించండి: రోగి ${updated.name}, వయస్సు ${updated.age}, ఆసుపత్రి: ${updated.hospitalName}, విభాగం: ${updated.departmentName}, సమయం: ${updated.appointmentSlot}, ఫోన్: ${updated.phone}. నేను ఈ రిజిస్ట్రేషన్ ఖరారు చేయమంటారా? దయచేసి 'సరే' లేదా 'Confirm' అని చెప్పండి.`
-        : `Please confirm your OPD details: Patient: ${updated.name}, Age: ${updated.age}, Hospital: ${updated.hospitalName}, Department: ${updated.departmentName}, Slot: ${updated.appointmentSlot}, Mobile: ${updated.phone}. Shall I book this appointment for you? Please say 'Yes' or 'Confirm'.`;
+    updated.nextQuestion = promptDictionaries.confirmation[lang] || promptDictionaries.confirmation.en;
 
     return updated;
   }
