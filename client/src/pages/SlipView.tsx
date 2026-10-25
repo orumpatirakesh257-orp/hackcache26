@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { DigitalSlip, LanguageCode } from '../../../shared/types';
 import { speakText } from '../utils/audio';
+import { useQueueStore } from '../store/useQueueStore';
 
 export const SlipView: React.FC = () => {
   const { slipId } = useParams<{ slipId: string }>();
@@ -32,19 +33,35 @@ export const SlipView: React.FC = () => {
     if (!slipId) return;
 
     fetch(`/api/registration/slip/${slipId}`)
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then((data) => {
         if (data.slip) {
           setSlip(data.slip);
         }
       })
-      .catch((err) => console.error(err))
+      .catch((err) => {
+        console.warn('Backend slip fetch error, falling back to local storage:', err);
+        const storeSlip = useQueueStore.getState().activeSlip;
+        if (storeSlip && (storeSlip.id === slipId || !slipId)) {
+          setSlip(storeSlip);
+        } else {
+          const cached = localStorage.getItem('sahai_active_slip');
+          if (cached) {
+            try {
+              setSlip(JSON.parse(cached));
+            } catch {}
+          }
+        }
+      })
       .finally(() => setLoading(false));
   }, [slipId]);
 
   const handleReadAloud = () => {
     if (!slip) return;
-    const speech = `Government General Hospital OPD Slip. Token Number ${slip.tokenNumber}. Patient Name: ${slip.patientName}. Department: ${slip.departmentName}. Doctor: ${slip.doctorName}. Room: ${slip.roomNumber}, Floor ${slip.floor}. Estimated wait time: ${slip.estimatedWaitMinutes} minutes. Navigation: ${slip.navigationHint}.`;
+    const speech = `${slip.hospitalName || 'Government General Hospital'} OPD Slip. Token Number ${slip.tokenNumber}. Patient Name: ${slip.patientName}. Department: ${slip.departmentName}. Doctor: ${slip.doctorName}. Room: ${slip.roomNumber}, Floor ${slip.floor}. Appointment slot: ${slip.appointmentSlot || slip.timeStr}. Estimated wait time: ${slip.estimatedWaitMinutes} minutes. Navigation: ${slip.navigationHint}.`;
     speakText(speech, (i18n.language as LanguageCode) || 'en');
   };
 
@@ -54,7 +71,7 @@ export const SlipView: React.FC = () => {
 
   const handleShareWhatsApp = () => {
     if (!slip) return;
-    const text = `*Sahai Setu - Govt Hospital OPD Slip*\nToken: *${slip.tokenNumber}*\nPatient: ${slip.patientName}\nDept: ${slip.departmentName} (${slip.roomNumber}, Floor ${slip.floor})\nOPD No: ${slip.opdNumber}\nDate: ${slip.dateStr}\nEstimated Wait: ~${slip.estimatedWaitMinutes} mins`;
+    const text = `*Sahai Setu - Digital OPD Slip*\nHospital: *${slip.hospitalName || 'Government General Hospital'}*\nToken: *${slip.tokenNumber}*\nPatient: ${slip.patientName}\nDept: ${slip.departmentName} (${slip.roomNumber}, Floor ${slip.floor})\nOPD No: ${slip.opdNumber}\nSlot: ${slip.appointmentSlot || slip.timeStr}\nDate: ${slip.appointmentDate || slip.dateStr}\nEstimated Wait: ~${slip.estimatedWaitMinutes} mins`;
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };
@@ -63,7 +80,7 @@ export const SlipView: React.FC = () => {
     if (!slip) return;
     const blob = new Blob(
       [
-        `SAHAI SETU - DIGITAL OPD SLIP\n----------------------------------\nTOKEN NUMBER: ${slip.tokenNumber}\nOPD NUMBER: ${slip.opdNumber}\nPATIENT: ${slip.patientName} (${slip.age}y / ${slip.gender})\nDEPARTMENT: ${slip.departmentName}\nDOCTOR: ${slip.doctorName}\nROOM: ${slip.roomNumber} (Floor ${slip.floor})\nDATE: ${slip.dateStr} ${slip.timeStr}\nWAIT TIME: ~${slip.estimatedWaitMinutes} mins\nNAVIGATION: ${slip.navigationHint}\nVERIFICATION QR CODE: ${slip.signedQrPayload}\n`,
+        `SAHAI SETU - DIGITAL OPD SLIP\n----------------------------------\nHOSPITAL: ${slip.hospitalName || 'Government General Hospital'}\nTOKEN NUMBER: ${slip.tokenNumber}\nOPD NUMBER: ${slip.opdNumber}\nPATIENT: ${slip.patientName} (${slip.age}y / ${slip.gender})\nDEPARTMENT: ${slip.departmentName}\nDOCTOR: ${slip.doctorName}\nROOM: ${slip.roomNumber} (Floor ${slip.floor})\nDATE: ${slip.appointmentDate || slip.dateStr}\nSLOT: ${slip.appointmentSlot || slip.timeStr}\nWAIT TIME: ~${slip.estimatedWaitMinutes} mins\nNAVIGATION: ${slip.navigationHint}\nVERIFICATION QR CODE: ${slip.signedQrPayload}\n`,
       ],
       { type: 'text/plain;charset=utf-8' }
     );
@@ -137,8 +154,8 @@ export const SlipView: React.FC = () => {
         <div className="border-b-2 border-dashed border-slate-300 pb-5 text-center space-y-1">
           <div className="flex items-center justify-center gap-2 mb-1">
             <img src="/logo.svg" alt="Sahai Setu" className="w-8 h-8" />
-            <h2 className="text-xl font-black text-slate-900 tracking-tight">
-              GOVERNMENT GENERAL HOSPITAL
+            <h2 className="text-xl font-black text-slate-900 tracking-tight uppercase">
+              {slip.hospitalName || 'GOVERNMENT GENERAL HOSPITAL'}
             </h2>
           </div>
           <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">
@@ -203,10 +220,12 @@ export const SlipView: React.FC = () => {
 
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
-              Date & Time
+              Appointment Date & Slot
             </span>
-            <span className="font-bold text-slate-800">{slip.dateStr}</span>
-            <span className="text-xs text-slate-500 font-medium block mt-0.5">{slip.timeStr}</span>
+            <span className="font-bold text-slate-900">{slip.appointmentDate || slip.dateStr}</span>
+            <span className="text-xs text-teal-800 font-bold block mt-0.5">
+              {slip.appointmentSlot || slip.timeStr}
+            </span>
           </div>
         </div>
 

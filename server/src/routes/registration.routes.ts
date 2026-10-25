@@ -9,7 +9,17 @@ import { Patient, PriorityLevel, RegistrationMethod } from '../../../shared/type
 
 const router = Router();
 
-// Submit guided registration
+import { SUPPORTED_HOSPITALS, AVAILABLE_OPD_TIME_SLOTS } from '../../../shared/constants';
+
+// Get available hospitals and appointment time slots
+router.get('/appointment-slots', (_req: Request, res: Response) => {
+  res.json({
+    hospitals: SUPPORTED_HOSPITALS,
+    slots: AVAILABLE_OPD_TIME_SLOTS,
+  });
+});
+
+// Submit guided / voice registration
 router.post('/guided', (req: Request, res: Response) => {
   const {
     name,
@@ -23,6 +33,10 @@ router.post('/guided', (req: Request, res: Response) => {
     registrationMethod,
     accessibilityNeeds,
     abhaId,
+    hospitalId,
+    hospitalName,
+    appointmentDate,
+    appointmentSlot,
   } = req.body;
 
   if (!name || !age || !gender || !phone) {
@@ -30,6 +44,30 @@ router.post('/guided', (req: Request, res: Response) => {
   }
 
   const store = db.getStore();
+
+  // Guard against duplicate submission (same phone and department within last 3 minutes)
+  const recentDuplicate = store.patients.find((p) => {
+    if (p.phone === phone && p.departmentId === (departmentId || 'dept-gen-med')) {
+      const diffMinutes = (Date.now() - new Date(p.registeredAt).getTime()) / (1000 * 60);
+      return diffMinutes < 3;
+    }
+    return false;
+  });
+
+  if (recentDuplicate) {
+    const existingSlip = store.slips.find((s) => s.patientId === recentDuplicate.id);
+    const existingToken = store.tokens.find((t) => t.patientId === recentDuplicate.id);
+    if (existingSlip && existingToken) {
+      return res.json({
+        success: true,
+        patient: recentDuplicate,
+        token: existingToken,
+        slip: existingSlip,
+        isExisting: true,
+      });
+    }
+  }
+
   const opdNumber = `OPD-2026-${(1000 + store.patients.length + 1).toString()}`;
   const now = new Date().toISOString();
 
@@ -41,6 +79,11 @@ router.post('/guided', (req: Request, res: Response) => {
   } else if (accessibilityNeeds?.wheelchair || accessibilityNeeds?.visuallyImpaired) {
     priority = 'disabled';
   }
+
+  const resolvedHospital =
+    SUPPORTED_HOSPITALS.find((h) => h.id === hospitalId) ||
+    SUPPORTED_HOSPITALS.find((h) => h.name.toLowerCase() === (hospitalName || '').toLowerCase()) ||
+    SUPPORTED_HOSPITALS[0];
 
   const patient: Patient = {
     id: 'pat-' + Date.now(),
@@ -55,9 +98,13 @@ router.post('/guided', (req: Request, res: Response) => {
     departmentId: departmentId || 'dept-gen-med',
     preferredDoctorId,
     registeredAt: now,
-    registrationMethod: (registrationMethod as RegistrationMethod) || 'self_guided',
+    registrationMethod: (registrationMethod as RegistrationMethod) || 'self_voice',
     accessibilityNeeds: accessibilityNeeds || {},
     journeyStep: 'doctor',
+    hospitalId: resolvedHospital.id,
+    hospitalName: resolvedHospital.name,
+    appointmentDate: appointmentDate || now.slice(0, 10),
+    appointmentSlot: appointmentSlot || AVAILABLE_OPD_TIME_SLOTS[1],
   };
 
   store.patients.push(patient);

@@ -98,6 +98,14 @@ export interface Doctor {
   patientsSeenToday: number;
 }
 
+export interface HospitalInfo {
+  id: string;
+  name: string;
+  city: string;
+  type: string;
+  district: string;
+}
+
 export interface Patient {
   id: string;
   opdNumber: string;
@@ -115,6 +123,10 @@ export interface Patient {
   registrationMethod: RegistrationMethod;
   accessibilityNeeds: AccessibilityNeeds;
   journeyStep: JourneyStep;
+  hospitalId?: string;
+  hospitalName?: string;
+  appointmentDate?: string;
+  appointmentSlot?: string;
 }
 
 export interface QueueToken {
@@ -159,6 +171,10 @@ export interface DigitalSlip {
   navigationHint: string;
   signedQrPayload: string;
   qrCodeDataUrl?: string;
+  hospitalId?: string;
+  hospitalName?: string;
+  appointmentDate?: string;
+  appointmentSlot?: string;
 }
 
 export interface EmergencyAlert {

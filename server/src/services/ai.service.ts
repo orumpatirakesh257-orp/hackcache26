@@ -1,5 +1,10 @@
 import { GoogleGenAI } from '@google/genai';
-import { EMERGENCY_DANGER_KEYWORDS, DEPARTMENTS_DATA } from '../../../shared/constants';
+import {
+  EMERGENCY_DANGER_KEYWORDS,
+  DEPARTMENTS_DATA,
+  SUPPORTED_HOSPITALS,
+  AVAILABLE_OPD_TIME_SLOTS,
+} from '../../../shared/constants';
 import { LanguageCode, Gender } from '../../../shared/types';
 
 export interface RegistrationExtraction {
@@ -7,10 +12,14 @@ export interface RegistrationExtraction {
   age?: number;
   gender?: Gender;
   phone?: string;
+  hospitalId?: string;
+  hospitalName?: string;
   symptoms?: string[];
   departmentId?: string;
   departmentName?: string;
   reason?: string;
+  appointmentDate?: string;
+  appointmentSlot?: string;
   accessibilityNeeds?: {
     wheelchair?: boolean;
     escort?: boolean;
@@ -18,6 +27,7 @@ export interface RegistrationExtraction {
     readingHelp?: boolean;
   };
   isComplete: boolean;
+  confirmed?: boolean;
   nextQuestion: string;
   emergencyTriggered: boolean;
   emergencyReason?: string;
@@ -166,6 +176,7 @@ export class AIService {
     language: LanguageCode = 'en'
   ): Promise<RegistrationExtraction> {
     const latestUserMsg = conversationHistory[conversationHistory.length - 1]?.text || '';
+    const textLower = latestUserMsg.toLowerCase().trim();
 
     // 1. Strict Emergency Danger Word Check
     const danger = this.checkDangerKeywords(latestUserMsg);
@@ -173,47 +184,104 @@ export class AIService {
       return {
         ...currentExtracted,
         isComplete: false,
+        confirmed: false,
         emergencyTriggered: true,
-        emergencyReason: `Potential emergency detected: "${danger.keyword}". Redirecting to emergency priority immediately.`,
+        emergencyReason: `Potential emergency detected: "${danger.keyword}". Redirecting to emergency casualty immediately.`,
         nextQuestion:
           language === 'hi'
-            ? 'सावधान! यह आपातकालीन स्थिति हो सकती है। हमारी मेडिकल टीम को तुरंत सूचित किया जा रहा है।'
-            : 'Warning! This may be an emergency. Our medical triage team is being alerted immediately.',
+            ? 'सावधान! यह आपातकालीन स्थिति हो सकती है। सामान्य ओपीडी में रुकने की बजाय तुरंत इमरजेंसी वार्ड जाएं।'
+            : language === 'te'
+            ? '⚠️ అత్యవసరం! దయచేసి సాధారణ టోకెన్ కోసం వేచి ఉండకండి. వెంటనే ఎమర్జెన్సీ విభాగానికి వెళ్ళండి.'
+            : 'EMERGENCY ALERT: This may be a medical emergency. Please proceed immediately to the Emergency Casualty Block or call 108!',
       };
     }
 
-    // 2. Call Gemini API if available
+    // 2. Check for verbal confirmation if details are already complete
+    const isAffirmative =
+      /^(yes|yeah|yep|confirm|book|proceed|ok|okay|sure|ha|haan|sahi|sahi hai|theek|theek hai|sare|khararu|aam|aamaam|sari)\b/i.test(
+        textLower
+      ) ||
+      textLower.includes('confirm') ||
+      textLower.includes('book') ||
+      textLower.includes('हाँ') ||
+      textLower.includes('సరే') ||
+      textLower.includes('சரி');
+
+    if (currentExtracted.isComplete && isAffirmative) {
+      return {
+        ...currentExtracted,
+        isComplete: true,
+        confirmed: true,
+        emergencyTriggered: false,
+        nextQuestion:
+          language === 'hi'
+            ? 'धन्यवाद! आपका ओपीडी पंजीकरण अस्पताल प्रणाली में दर्ज किया जा रहा है...'
+            : language === 'te'
+            ? 'ధన్యవాదాలు! మీ ఓపిడి రిజిస్ట్రేషన్ ఆసుపత్రి వ్యవస్థలో నమోదు చేయబడుతోంది...'
+            : 'Thank you! Submitting and saving your OPD appointment in the hospital system now...',
+      };
+    }
+
+    // 3. Call Gemini API if available (gemini-3.8-flash)
     const client = this.getClient();
     if (client) {
       try {
-        const prompt = `You are "Sahai Setu", an empathetic, gentle registration assistant at a public government hospital.
-Your job is to register patients by asking one simple question at a time in ${language} language.
-IMPORTANT RULES:
-- Never provide medical diagnosis or advice. Always remind: "A doctor will check you."
-- Speak simply (6th grade reading level).
-- Extract patient info into structured JSON.
-Current extracted data so far: ${JSON.stringify(currentExtracted)}
-Latest user message: "${latestUserMsg}"
+        const prompt = `You are "Sahai Setu", an empathetic, intelligent conversational voice registration assistant for public government hospitals in India.
+Your mission is to guide patients naturally through voice conversation to register for an OPD appointment.
+Do NOT make the patient fill out forms manually. Listen to what they say, extract the required fields, and ask for the NEXT missing piece of information one by one.
 
-Available departments: General Medicine (GM), Orthopaedics (ORTHO), Paediatrics (PAED), Gynaecology (GYN), Eye, ENT, Skin, Dental, Cardiology, Surgery.
+REQUIRED INFORMATION TO COLLECT:
+1. Patient's full name ("name")
+2. Age or date of birth ("age")
+3. Preferred hospital ("hospitalId", "hospitalName") - choose from:
+   - "hosp-aiims-delhi": "AIIMS New Delhi (Main Campus)"
+   - "hosp-civil-gurugram": "District Civil Hospital (Sector 10)"
+   - "hosp-ggh-hyd": "Government General Hospital (GGH)"
+   - "hosp-safdarjung": "Safdarjung Hospital & VMMC"
+   - "hosp-sms-jaipur": "SMS Government Hospital"
+4. Symptoms / health complaints ("symptoms") & suggested department ("departmentId", "departmentName")
+   Available departments: General Medicine (dept-gen-med), Orthopaedics (dept-ortho), Paediatrics (dept-paed), Gynaecology (dept-gyn), Eye (dept-eye), ENT (dept-ent), Skin (dept-derma), Dental (dept-dental), Cardiology (dept-cardio), Surgery (dept-surgery)
+5. Appointment date ("appointmentDate") and available time slot ("appointmentSlot")
+   Available slots: "09:00 AM - 10:00 AM", "10:00 AM - 11:00 AM", "11:00 AM - 12:00 PM", "02:00 PM - 03:00 PM", "03:00 PM - 04:00 PM"
+6. Contact number ("phone"): 10-digit mobile number for SMS token updates
+7. Verbal confirmation ("confirmed"): true if user confirms the collected summary
 
-Respond ONLY with a JSON object:
+CURRENT EXTRACTED DATA SO FAR:
+${JSON.stringify(currentExtracted)}
+
+LATEST PATIENT MESSAGE:
+"${latestUserMsg}"
+
+LANGUAGE FOR RESPONSE: ${language}
+
+RULES:
+- If the patient provides multiple details in one sentence (e.g. "My name is Ramesh, 45 years old, knee pain, AIIMS"), extract all of them at once!
+- Never provide medical diagnosis. Always say a doctor will examine them.
+- If all required fields (name, age, hospital, symptoms, department, slot, phone) are present, set "isComplete": true, summarize the details clearly, and ask the patient: "Shall I confirm and book your OPD registration? Say 'Yes' or 'Confirm'."
+- If user confirms the summary, set "confirmed": true.
+
+Respond strictly with valid JSON only in this schema:
 {
   "name": "extracted name or current",
   "age": number or current,
   "gender": "male" | "female" | "other" or current,
-  "phone": "extracted phone or current",
+  "phone": "extracted 10-digit mobile or current",
+  "hospitalId": "hospital id",
+  "hospitalName": "hospital name",
   "symptoms": ["list of symptoms"],
-  "departmentId": "suggested department id (e.g. dept-ortho, dept-gen-med)",
-  "departmentName": "suggested department name",
-  "reason": "short 1-line reason for department suggestion",
-  "accessibilityNeeds": { "wheelchair": boolean, "escort": boolean, "interpreter": boolean, "readingHelp": boolean },
-  "isComplete": boolean (true ONLY when name, age, gender, phone, and symptoms/department are all known and confirmed),
-  "nextQuestion": "The next single simple question to ask the patient in ${language}"
+  "departmentId": "department id",
+  "departmentName": "department name",
+  "reason": "1-line plain language reason for department",
+  "appointmentDate": "YYYY-MM-DD or readable date",
+  "appointmentSlot": "e.g. 10:00 AM - 11:00 AM",
+  "accessibilityNeeds": { "wheelchair": boolean, "escort": boolean },
+  "isComplete": boolean,
+  "confirmed": boolean,
+  "nextQuestion": "The empathetic spoken question in ${language} to read aloud next"
 }`;
 
         const response = await client.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.8-flash',
           contents: prompt,
         });
 
@@ -228,11 +296,11 @@ Respond ONLY with a JSON object:
           };
         }
       } catch (err) {
-        console.warn('Gemini API call failed, using graceful deterministic fallback agent', err);
+        console.warn('Gemini 3.8 Flash API call failed or unconfigured, using deterministic conversational fallback', err);
       }
     }
 
-    // 3. Graceful Deterministic Fallback Agent (Rule-based)
+    // 4. Graceful Deterministic Conversational Fallback Engine
     return this.fallbackRegistrationTurn(latestUserMsg, currentExtracted, language);
   }
 
@@ -241,123 +309,262 @@ Respond ONLY with a JSON object:
     extracted: Partial<RegistrationExtraction>,
     lang: LanguageCode
   ): RegistrationExtraction {
+    const todayStr = new Date().toISOString().slice(0, 10);
     const updated: RegistrationExtraction = {
       name: extracted.name,
       age: extracted.age,
-      gender: extracted.gender,
+      gender: extracted.gender || 'male',
       phone: extracted.phone,
-      symptoms: extracted.symptoms || [],
+      hospitalId: extracted.hospitalId,
+      hospitalName: extracted.hospitalName,
+      symptoms: extracted.symptoms ? [...extracted.symptoms] : [],
       departmentId: extracted.departmentId,
       departmentName: extracted.departmentName,
       reason: extracted.reason,
+      appointmentDate: extracted.appointmentDate,
+      appointmentSlot: extracted.appointmentSlot,
       accessibilityNeeds: extracted.accessibilityNeeds || {},
       isComplete: false,
+      confirmed: false,
       nextQuestion: '',
       emergencyTriggered: false,
     };
 
     const text = userText.trim();
+    const lower = text.toLowerCase();
 
-    // Check for wheelchair / assistance needs
-    if (text.toLowerCase().includes('wheelchair') || text.includes('व्हीलचेयर') || text.includes('சக்கர நாற்காலி')) {
+    // 1. Verbal Confirmation detection
+    if (extracted.isComplete) {
+      if (
+        /^(yes|yeah|yep|confirm|book|proceed|ok|okay|sure|ha|haan|sahi|sahi hai|theek|sare|khararu|aam|aamaam|sari)\b/i.test(
+          lower
+        ) ||
+        lower.includes('confirm') ||
+        lower.includes('book') ||
+        lower.includes('हाँ') ||
+        lower.includes('సరే') ||
+        lower.includes('சரி')
+      ) {
+        updated.isComplete = true;
+        updated.confirmed = true;
+        updated.nextQuestion =
+          lang === 'hi'
+            ? 'धन्यवाद! आपकी ओपीडी पर्ची अस्पताल डेटाबेस में दर्ज हो रही है...'
+            : lang === 'te'
+            ? 'ధన్యవాదాలు! మీ అపాయింట్‌మెంట్ రికార్డ్ సేవ్ చేయబడుతోంది...'
+            : 'Thank you! Confirming and saving your registration in the hospital system...';
+        return updated;
+      }
+    }
+
+    // 2. Wheelchair / Accessibility detection
+    if (lower.includes('wheelchair') || text.includes('व्हीलचेयर') || text.includes('చక్రాల కుర్చీ')) {
       updated.accessibilityNeeds = { ...updated.accessibilityNeeds, wheelchair: true };
     }
 
-    // If name is missing
-    if (!updated.name) {
-      // If user typed a name
-      if (text.length > 1 && !/\d{5,}/.test(text)) {
-        // Strip common prefixes
-        const cleanName = text.replace(/^(my name is|i am|mera naam|என் பெயர்)\s+/i, '');
-        updated.name = cleanName;
-      } else {
-        updated.nextQuestion =
-          lang === 'hi'
-            ? 'नमस्ते! कृपया अपना पूरा नाम बताएं।'
-            : lang === 'ta'
-            ? 'வணக்கம்! உங்கள் முழு பெயரை கூறவும்.'
-            : 'Hello! What is your full name?';
-        return updated;
+    // 3. Hospital detection
+    if (!updated.hospitalName) {
+      for (const h of SUPPORTED_HOSPITALS) {
+        if (
+          lower.includes(h.name.toLowerCase()) ||
+          lower.includes(h.city.toLowerCase()) ||
+          (h.id.includes('aiims') && lower.includes('aiims')) ||
+          (h.id.includes('civil') && lower.includes('civil')) ||
+          (h.id.includes('ggh') && (lower.includes('ggh') || lower.includes('general'))) ||
+          (h.id.includes('safdarjung') && lower.includes('safdarjung')) ||
+          (h.id.includes('sms') && lower.includes('sms'))
+        ) {
+          updated.hospitalId = h.id;
+          updated.hospitalName = h.name;
+          break;
+        }
       }
     }
 
-    // If age is missing
+    // 4. Phone detection (10 digits)
+    const phoneMatch = text.match(/\b([6-9]\d{9})\b/);
+    if (!updated.phone && phoneMatch) {
+      updated.phone = phoneMatch[1];
+    }
+
+    // 5. Age detection
     if (!updated.age) {
-      const ageMatch = text.match(/\b(1[0-1]\d|[1-9]\d?)\b/);
-      if (ageMatch) {
-        updated.age = parseInt(ageMatch[1], 10);
-      } else {
-        updated.nextQuestion =
-          lang === 'hi'
-            ? `${updated.name} जी, आपकी उम्र (Age) कितनी है?`
-            : lang === 'ta'
-            ? `${updated.name}, உங்கள் வயது என்ன?`
-            : `${updated.name}, what is your age?`;
-        return updated;
+      const ageExplicit = text.match(/\b(?:age|aged|उम्र|வயது|వయస్సు)\s*[:=]?\s*(\d{1,2})\b/i);
+      const dobMatch = text.match(/\b(19\d{2}|20[0-2]\d)\b/);
+      const ageGeneral = text.match(/\b(1[0-1]\d|[1-9]\d?)\b(?!\d)/);
+
+      if (ageExplicit) {
+        updated.age = parseInt(ageExplicit[1], 10);
+      } else if (dobMatch) {
+        updated.age = new Date().getFullYear() - parseInt(dobMatch[1], 10);
+      } else if (ageGeneral && !phoneMatch) {
+        const val = parseInt(ageGeneral[1], 10);
+        if (val > 0 && val < 115) {
+          updated.age = val;
+        }
       }
     }
 
-    // If gender is missing
-    if (!updated.gender) {
-      const lower = text.toLowerCase();
-      if (lower.includes('female') || lower.includes('महिला') || lower.includes('பெண்') || lower.includes('woman') || lower.includes('girl')) {
+    // 6. Gender detection
+    if (!extracted.gender || extracted.gender === 'male') {
+      if (
+        lower.includes('female') ||
+        lower.includes('woman') ||
+        lower.includes('lady') ||
+        lower.includes('महिला') ||
+        lower.includes('பெண்') ||
+        lower.includes('స్త్రీ')
+      ) {
         updated.gender = 'female';
-      } else if (lower.includes('male') || lower.includes('पुरुष') || lower.includes('ஆண்') || lower.includes('man') || lower.includes('boy')) {
-        updated.gender = 'male';
-      } else {
-        updated.nextQuestion =
-          lang === 'hi'
-            ? 'आपका लिंग क्या है? (पुरुष / महिला / अन्य)'
-            : lang === 'ta'
-            ? 'உங்கள் பாலினம் என்ன? (ஆண் / பெண் / மற்றவை)'
-            : 'What is your gender? (Male / Female / Other)';
-        return updated;
       }
     }
 
-    // If phone is missing
-    if (!updated.phone) {
-      const phoneMatch = text.match(/\b([6-9]\d{9})\b/);
-      if (phoneMatch) {
-        updated.phone = phoneMatch[1];
-      } else {
-        updated.nextQuestion =
-          lang === 'hi'
-            ? 'कृपया अपना 10 अंकों का मोबाइल नंबर बताएं ताकि पर्ची और टोकन का SMS भेजा जा सके।'
-            : lang === 'ta'
-            ? 'உங்கள் 10 இலக்க மொபைல் எண்ணை தெரிவிக்கவும்.'
-            : 'Please enter your 10-digit mobile number for SMS token updates.';
-        return updated;
+    // 7. Name extraction
+    if (!updated.name) {
+      const namePrefixMatch = text.match(
+        /(?:my name is|i am|patient is|patient name is|father is|father name is|mera naam|naam|పేరు|என் பெயர்)\s+([A-Za-z\u0900-\u097F\u0C00-\u0C7F\u0B80-\u0BFF\s]{2,30})/i
+      );
+      if (namePrefixMatch && !/\d/.test(namePrefixMatch[1])) {
+        updated.name = namePrefixMatch[1].trim().replace(/\s+(age|phone|hospital|for|having).*$/i, '');
+      } else if (text.length > 1 && text.length < 45 && !/\d{4,}/.test(text)) {
+        // Direct name response or simple answer
+        const isExcluded =
+          lower.includes('hospital') ||
+          lower.includes('pain') ||
+          lower.includes('fever') ||
+          lower.includes('doctor') ||
+          lower.includes('morning') ||
+          lower.includes('afternoon');
+        if (!isExcluded) {
+          updated.name = text.replace(/^(my name is|i am|mera naam|patient name is|patient is|his name is|her name is)\s+/i, '').trim();
+        }
       }
     }
 
-    // If symptoms / problem is missing
+    // 8. Symptoms & Department mapping
     if (!updated.symptoms || updated.symptoms.length === 0) {
-      if (text.length > 3) {
+      const symptomWords = [
+        'pain', 'fever', 'cough', 'cold', 'headache', 'joint', 'knee', 'bone',
+        'stomach', 'vomiting', 'chest', 'eye', 'ear', 'throat', 'skin', 'rash',
+        'tooth', 'pregnancy', 'injury', 'wound', 'allergy', 'bp', 'sugar',
+        'दर्द', 'बुखार', 'खांसी', 'घुटने', 'हड्डी', 'पेट', 'आंख',
+        'నొప్పి', 'జ్వరం', 'దగ్గు', 'మోకాలు', 'కడుపు', 'కన్ను',
+        'வலி', 'காய்ச்சல்', 'இருமல்', 'முழங்கால்'
+      ];
+      const hasSymptom = symptomWords.some((w) => lower.includes(w));
+      if (hasSymptom || lower.includes('problem') || lower.includes('suffering')) {
         updated.symptoms = [text];
         const suggestion = this.suggestDepartment(updated.symptoms, lang);
         updated.departmentId = suggestion.departmentId;
         updated.departmentName = suggestion.departmentName;
         updated.reason = suggestion.reason;
-      } else {
+      }
+    }
+
+    // 9. Appointment Date & Slot
+    if (!updated.appointmentDate) {
+      if (lower.includes('tomorrow') || text.includes('कल') || text.includes('రేపు') || text.includes('நாளை')) {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        updated.appointmentDate = tomorrow.toISOString().slice(0, 10);
+      } else if (lower.includes('today') || text.includes('आज') || text.includes('ఈరోజు') || text.includes('இன்று')) {
+        updated.appointmentDate = todayStr;
+      }
+    }
+
+    if (!updated.appointmentSlot) {
+      for (const slot of AVAILABLE_OPD_TIME_SLOTS) {
+        const hour = slot.split(':')[0];
+        if (lower.includes(slot.toLowerCase()) || lower.includes(`${hour}:00`) || lower.includes(`${hour} am`) || lower.includes(`${hour} pm`)) {
+          updated.appointmentSlot = slot;
+          break;
+        }
+      }
+      if (!updated.appointmentSlot && (lower.includes('morning') || text.includes('सुबह') || text.includes('ఉదయం'))) {
+        updated.appointmentSlot = '10:00 AM - 11:00 AM';
+      } else if (!updated.appointmentSlot && (lower.includes('afternoon') || text.includes('दोपहर') || text.includes('మధ్యాహ్నం'))) {
+        updated.appointmentSlot = '02:00 PM - 03:00 PM';
+      }
+    }
+
+    // Determine the NEXT question step by step
+    // Priority 1: Hospital
+    if (!updated.hospitalName) {
+      updated.nextQuestion =
+        lang === 'hi'
+          ? 'नमस्ते! सहाय सेतु में आपका स्वागत है। आप किस अस्पताल में दिखाना चाहते हैं? (जैसे एम्स नई दिल्ली, सफदरजंग, या जिला अस्पताल)'
+          : lang === 'te'
+          ? 'నమస్కారం! సహాయ సేతుకు స్వాగతం. మీరు ఏ ఆసుపత్రిని ఎంచుకోవాలనుకుంటున్నారు? (ఉదా. AIIMS, GGH హైదరాబాద్, లేదా జిల్లా సివిల్ ఆసుపత్రి)'
+          : 'Welcome to Sahai Setu OPD Voice Registration! Which hospital would you like to visit? You can say AIIMS New Delhi, Government General Hospital, or District Civil Hospital.';
+      return updated;
+    }
+
+    // Priority 2: Patient Name
+    if (!updated.name) {
+      updated.nextQuestion =
+        lang === 'hi'
+          ? 'मरीज का पूरा नाम क्या है?'
+          : lang === 'te'
+          ? 'రోగి పూర్తి పేరు ఏమిటి?'
+          : "What is the patient's full name?";
+      return updated;
+    }
+
+    // Priority 3: Age
+    if (!updated.age) {
+      updated.nextQuestion =
+        lang === 'hi'
+          ? `${updated.name} जी की उम्र (Age) या जन्म का वर्ष क्या है?`
+          : lang === 'te'
+          ? `${updated.name} గారి వయస్సు లేదా పుట్టిన సంవత్సరం ఎంత?`
+          : `What is ${updated.name}'s age or year of birth?`;
+      return updated;
+    }
+
+    // Priority 4: Symptoms & Consultation reason
+    if (!updated.symptoms || updated.symptoms.length === 0) {
+      updated.nextQuestion =
+        lang === 'hi'
+          ? `${updated.name} जी, आपको क्या स्वास्थ्य समस्या या लक्षण हैं? (जैसे घुटने का दर्द, बुखार, खांसी)`
+          : lang === 'te'
+          ? `${updated.name} గారూ, మీకు ఎటువంటి ఆరోగ్య సమస్య లేదా లక్షణాలు ఉన్నాయి? (ఉదా. మోకాలి నొప్పి, జ్వరం, దగ్గు)`
+          : `What health symptoms or complaints is ${updated.name} experiencing today? (e.g. knee pain, fever, cough)`;
+      return updated;
+    }
+
+    // Priority 5: Appointment Slot
+    if (!updated.appointmentDate || !updated.appointmentSlot) {
+      if (!updated.appointmentDate) updated.appointmentDate = todayStr;
+      if (!updated.appointmentSlot) {
         updated.nextQuestion =
           lang === 'hi'
-            ? 'आपको क्या तकलीफ है? (जैसे बुखार, घुटने का दर्द, खांसी, चोट आदि)'
-            : lang === 'ta'
-            ? 'உங்களுக்கு என்ன பிரச்சனை? (எ.கா. காய்ச்சல், முழங்கால் வலி, இருமல்)'
-            : 'What health problem are you experiencing today? (e.g., knee pain, fever, cough)';
+            ? 'आप किस समय का ओपीडी स्लॉट चाहते हैं? उपलब्ध स्लॉट: 10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM, या दोपहर 02:00 PM - 03:00 PM'
+            : lang === 'te'
+            ? 'మీరు ఏ సమయం స్లాట్ కావాలనుకుంటున్నారు? అందుబాటులో ఉన్న స్లాట్లు: 10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM, లేదా 02:00 PM - 03:00 PM'
+            : 'Which appointment time slot do you prefer? Available slots: 10:00 AM - 11:00 AM, 11:00 AM - 12:00 PM, or 02:00 PM - 03:00 PM.';
         return updated;
       }
     }
 
-    // All fields present -> Ready for confirmation
+    // Priority 6: Mobile Number
+    if (!updated.phone) {
+      updated.nextQuestion =
+        lang === 'hi'
+          ? 'कृपया अपना 10 अंकों का मोबाइल नंबर बताएं ताकि डिजिटल पर्ची और टोकन का एसएमएस भेजा जा सके।'
+          : lang === 'te'
+          ? 'దయచేసి మీ 10 అంకెల మొబైల్ నంబర్ చెప్పండి, తద్వారా డిజిటల్ స్లిప్ మరియు టోకెన్ SMS పంపబడుతుంది.'
+          : 'Please tell me your 10-digit mobile number so we can send your digital OPD slip and live queue alerts.';
+      return updated;
+    }
+
+    // All fields collected! Ask for patient confirmation before registering.
     updated.isComplete = true;
     updated.nextQuestion =
       lang === 'hi'
-        ? `धन्यवाद ${updated.name} जी! हमने आपकी जानकारी दर्ज कर ली है: उम्र ${updated.age}, विभाग ${updated.departmentName}। एक डॉक्टर आपकी जांच करेंगे। क्या यह सही है?`
-        : lang === 'ta'
-        ? `நன்றி ${updated.name}! விவரங்கள் பதிவாகியுள்ளன: வயது ${updated.age}, பிரிவு ${updated.departmentName}. மருத்துவர் பரிசோதிப்பார். விவரங்கள் சரியா?`
-        : `Thank you, ${updated.name}! Details collected: Age ${updated.age}, Department: ${updated.departmentName}. A doctor will check you. Confirm registration?`;
+        ? `कृपया विवरण की पुष्टि करें: मरीज ${updated.name}, उम्र ${updated.age}, अस्पताल: ${updated.hospitalName}, विभाग: ${updated.departmentName}, समय: ${updated.appointmentSlot}, फोन: ${updated.phone}। क्या मैं यह ओपीडी पंजीकरण बुक कर दूं? कृपया 'हाँ' या 'Confirm' कहें।`
+        : lang === 'te'
+        ? `దయచేసి వివరాలను నిర్ధారించండి: రోగి ${updated.name}, వయస్సు ${updated.age}, ఆసుపత్రి: ${updated.hospitalName}, విభాగం: ${updated.departmentName}, సమయం: ${updated.appointmentSlot}, ఫోన్: ${updated.phone}. నేను ఈ రిజిస్ట్రేషన్ ఖరారు చేయమంటారా? దయచేసి 'సరే' లేదా 'Confirm' అని చెప్పండి.`
+        : `Please confirm your OPD details: Patient: ${updated.name}, Age: ${updated.age}, Hospital: ${updated.hospitalName}, Department: ${updated.departmentName}, Slot: ${updated.appointmentSlot}, Mobile: ${updated.phone}. Shall I book this appointment for you? Please say 'Yes' or 'Confirm'.`;
 
     return updated;
   }

@@ -220,14 +220,18 @@ export class QueueService {
       roomNumber: assignedDoc.roomNumber,
       floor: assignedDoc.floor,
       block: assignedDoc.block,
-      dateStr,
-      timeStr,
+      dateStr: patient.appointmentDate || dateStr,
+      timeStr: patient.appointmentSlot || timeStr,
       estimatedWaitMinutes: 15,
       navigationHint:
         assignedDoc.floor === 0
           ? `Ground Floor, turn left after the Water Purifier to ${assignedDoc.roomNumber}`
           : `Floor ${assignedDoc.floor}, take the elevator or stairs next to the Ficus plant to ${assignedDoc.roomNumber}`,
       signedQrPayload: signedPayload,
+      hospitalId: patient.hospitalId || 'hosp-aiims-delhi',
+      hospitalName: patient.hospitalName || 'AIIMS New Delhi (Main Campus)',
+      appointmentDate: patient.appointmentDate || dateStr,
+      appointmentSlot: patient.appointmentSlot || timeStr,
     };
 
     store.slips.push(slip);

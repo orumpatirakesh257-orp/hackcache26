@@ -1,4 +1,51 @@
-import { LanguageCode, Department, Doctor, ABHAProfile, UserRole } from './types';
+import { LanguageCode, Department, Doctor, ABHAProfile, UserRole, HospitalInfo } from './types';
+
+export const SUPPORTED_HOSPITALS: HospitalInfo[] = [
+  {
+    id: 'hosp-aiims-delhi',
+    name: 'AIIMS New Delhi (Main Campus)',
+    city: 'New Delhi',
+    type: 'Apex Autonomous Institute',
+    district: 'South Delhi',
+  },
+  {
+    id: 'hosp-ggh-hyd',
+    name: 'Government General Hospital (GGH)',
+    city: 'Hyderabad',
+    type: 'District Teaching Hospital',
+    district: 'Hyderabad',
+  },
+  {
+    id: 'hosp-civil-gurugram',
+    name: 'District Civil Hospital (Sector 10)',
+    city: 'Gurugram',
+    type: 'District Hospital',
+    district: 'Gurugram',
+  },
+  {
+    id: 'hosp-safdarjung',
+    name: 'Safdarjung Hospital & VMMC',
+    city: 'New Delhi',
+    type: 'Central Government Hospital',
+    district: 'New Delhi',
+  },
+  {
+    id: 'hosp-sms-jaipur',
+    name: 'SMS Government Hospital',
+    city: 'Jaipur',
+    type: 'State Medical College Hospital',
+    district: 'Jaipur',
+  },
+];
+
+export const AVAILABLE_OPD_TIME_SLOTS = [
+  '09:00 AM - 10:00 AM',
+  '10:00 AM - 11:00 AM',
+  '11:00 AM - 12:00 PM',
+  '12:00 PM - 01:00 PM',
+  '02:00 PM - 03:00 PM',
+  '03:00 PM - 04:00 PM',
+];
 
 export const SUPPORTED_LANGUAGES: {
   code: LanguageCode;
