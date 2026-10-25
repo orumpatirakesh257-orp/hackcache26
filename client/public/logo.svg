@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bridgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d9488" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <linearGradient id="plusGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#14b8a6" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+  </defs>
+  <!-- Background soft circle -->
+  <circle cx="60" cy="60" r="54" fill="#f0fdfa" stroke="#ccfbf1" stroke-width="3"/>
+  <!-- Bridge Arch Motif -->
+  <path d="M 22 76 C 36 40, 84 40, 98 76" fill="none" stroke="url(#bridgeGrad)" stroke-width="8" stroke-linecap="round"/>
+  <!-- Bridge Deck Road -->
+  <path d="M 18 78 L 102 78" stroke="url(#bridgeGrad)" stroke-width="5" stroke-linecap="round"/>
+  <!-- Support pillars -->
+  <line x1="38" y1="62" x2="38" y2="78" stroke="#0d9488" stroke-width="3" stroke-linecap="round"/>
+  <line x1="50" y1="52" x2="50" y2="78" stroke="#0d9488" stroke-width="3" stroke-linecap="round"/>
+  <line x1="70" y1="52" x2="70" y2="78" stroke="#0284c7" stroke-width="3" stroke-linecap="round"/>
+  <line x1="82" y1="62" x2="82" y2="78" stroke="#0284c7" stroke-width="3" stroke-linecap="round"/>
+  <!-- Medical Cross / Help Star in Sky -->
+  <rect x="56" y="24" width="8" height="20" rx="3" fill="url(#plusGrad)" />
+  <rect x="50" y="30" width="20" height="8" rx="3" fill="url(#plusGrad)" />
+</svg>
